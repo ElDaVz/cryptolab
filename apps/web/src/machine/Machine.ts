@@ -15,6 +15,8 @@ export class Machine {
  private disposed=false;
  private mapping:string|null|undefined=undefined;
  private model:MachineModel|null=null;
+ private drag:{field:'a'|'b';pointerId:number;lastX:number}|null=null;
+ onStep:(field:'a'|'b',delta:number)=>void=()=>{};
  constructor(private readonly container:HTMLElement,private readonly lost:()=>void){
   this.renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
   this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -44,6 +46,7 @@ export class Machine {
   }
   const name=this.label('CRIPTO LAB',1.15);name.position.set(0,.45,.24);this.scene.add(name);
   this.renderer.domElement.addEventListener('webglcontextlost',this.onLoss);
+  const canvas=this.renderer.domElement;canvas.addEventListener('pointerdown',this.pointerDown);canvas.addEventListener('pointermove',this.pointerMove);canvas.addEventListener('pointerup',this.cancelDrag);canvas.addEventListener('pointercancel',this.cancelDrag);canvas.addEventListener('lostpointercapture',this.cancelDrag);
   this.observer=new ResizeObserver(()=>this.resize());this.observer.observe(container);this.resize();
   this.loop();
  }
@@ -56,15 +59,24 @@ export class Machine {
  }
  private clearOutput(){for(const child of [...this.outputLabels.children]){const sprite=child as THREE.Sprite;const material=sprite.material;material.map?.dispose();if(material.map)this.resources.delete(material.map);material.dispose();this.resources.delete(material);this.outputLabels.remove(child);}}
  update(model:MachineModel){
+  if(this.model?.context!==model.context)this.cancelDrag();
   this.model=model;
   if(this.mapping!==model.mapping){this.clearOutput();this.mapping=model.mapping;if(model.mapping)for(let i=0;i<26;i++){const angle=2*Math.PI*i/26;const label=this.label(model.mapping[i]);label.position.set(1.75*Math.sin(angle),1.75*Math.cos(angle),.2);this.outputLabels.add(label);}}
-  for(const field of ['a','b']as const){this.knobs[field].visible=model.algorithm==='affine';const position=model.positions[field];this.knobs[field].rotation.z=position===null?0:-2*Math.PI*position/26;}
+  for(const field of ['a','b']as const){this.knobs[field].visible=model.algorithm==='affine';const position=model.positions[field];this.knobs[field].children[1].visible=position!==null;}
   this.scene.children.filter(o=>o.userData.knobLabel).forEach(o=>{o.visible=model.algorithm==='affine';});
   this.renderer.domElement.dataset.mapping=model.mapping??'';
  }
  target(){return cameraPreset(this.model?.perspective??'sender',this.camera.aspect);}
  private resize(){if(this.disposed)return;const width=this.container.clientWidth,height=this.container.clientHeight;if(width===0||height===0)return;this.renderer.setSize(width,height,false);this.camera.aspect=width/height;Object.assign(this.camera.position,this.target());this.camera.updateProjectionMatrix();}
  private loop=()=>{if(this.disposed)return;this.camera.lookAt(0,0,0);this.renderer.render(this.scene,this.camera);const canvas=this.renderer.domElement;canvas.dataset.triangles=String(this.renderer.info.render.triangles);canvas.dataset.frames=String(Number(canvas.dataset.frames??0)+1);for(const field of ['a','b']as const){const p=this.knobs[field].position.clone().project(this.camera);canvas.dataset[field==='a'?'knobA':'knobB']=`${(p.x+1)*canvas.clientWidth/2},${(1-p.y)*canvas.clientHeight/2}`;}this.frame=requestAnimationFrame(this.loop);};
+ private pointerDown=(event:PointerEvent)=>{
+  if(!this.model?.editable||this.model.algorithm!=='affine'||event.button!==0)return;
+  const canvas=this.renderer.domElement,bounds=canvas.getBoundingClientRect();const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((event.clientX-bounds.left)/bounds.width*2-1,1-(event.clientY-bounds.top)/bounds.height*2),this.camera);
+  const hit=ray.intersectObjects([this.knobs.a,this.knobs.b],true).find(hit=>hit.object.userData.field);if(!hit)return;
+  this.drag={field:hit.object.userData.field as 'a'|'b',pointerId:event.pointerId,lastX:event.clientX};canvas.setPointerCapture(event.pointerId);event.preventDefault();
+ };
+ private pointerMove=(event:PointerEvent)=>{const drag=this.drag;if(!drag||drag.pointerId!==event.pointerId)return;const steps=Math.trunc((event.clientX-drag.lastX)/12);if(!steps)return;drag.lastX+=steps*12;for(let i=0;i<Math.abs(steps);i++)this.onStep(drag.field,Math.sign(steps));};
+ cancelDrag=()=>{const drag=this.drag;this.drag=null;if(drag&&this.renderer.domElement.hasPointerCapture(drag.pointerId))this.renderer.domElement.releasePointerCapture(drag.pointerId);};
  private onLoss=(event:Event)=>{event.preventDefault();this.lost();};
- destroy(){if(this.disposed)return;this.disposed=true;cancelAnimationFrame(this.frame);this.observer.disconnect();this.renderer.domElement.removeEventListener('webglcontextlost',this.onLoss);this.clearOutput();for(const resource of this.resources)resource.dispose();this.resources.clear();this.scene.clear();this.renderer.dispose();this.renderer.domElement.remove();}
+ destroy(){if(this.disposed)return;this.disposed=true;this.cancelDrag();const canvas=this.renderer.domElement;canvas.removeEventListener('pointerdown',this.pointerDown);canvas.removeEventListener('pointermove',this.pointerMove);canvas.removeEventListener('pointerup',this.cancelDrag);canvas.removeEventListener('pointercancel',this.cancelDrag);canvas.removeEventListener('lostpointercapture',this.cancelDrag);cancelAnimationFrame(this.frame);this.observer.disconnect();this.renderer.domElement.removeEventListener('webglcontextlost',this.onLoss);this.clearOutput();for(const resource of this.resources)resource.dispose();this.resources.clear();this.scene.clear();this.renderer.dispose();this.renderer.domElement.remove();}
 }

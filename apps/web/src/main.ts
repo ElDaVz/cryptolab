@@ -13,7 +13,7 @@ const el=(id:string)=>document.getElementById(id)!;
 const director=new AnimationDirector();
 let machine:Machine|null=null;let machineContext='';
 function loseWebGL(){director.destroy();machine?.destroy();machine=null;el('render-notice').textContent='Modo textual: WebGL no está disponible. Todos los cálculos y controles siguen disponibles.';}
-try{machine=new Machine(el('machine'),loseWebGL);}catch{loseWebGL();}
+try{machine=new Machine(el('machine'),loseWebGL);machine.onStep=(field,delta)=>{session.stepKey(field,delta);render();};}catch{loseWebGL();}
 function render(focusHeading=false){
  const active=document.activeElement as HTMLInputElement|HTMLTextAreaElement|null;const saved=active?.id;const selection=active?.tagName==='TEXTAREA'||(active?.tagName==='INPUT'&&active.type==='text')?[active.selectionStart,active.selectionEnd]:null;
  el('engine').innerHTML=loading==='ready'?'Motor matemático listo':loading==='loading'?'Cargando motor matemático…':`No se pudo cargar el motor matemático ${button('retry','Reintentar')}`;
@@ -21,7 +21,9 @@ function render(focusHeading=false){
  for(const id of ['navigation','preferences','left','right','bottom'])el(id).hidden=guided;
  el('intro').hidden=!guided;el('machine').hidden=guided;el('machine-info').hidden=guided;
  const model=session.machine();machine?.update(model);
- if(machine&&machineContext!==model.context){machineContext=model.context;director.camera(machine.camera.position,machine.target());}
+ const contextChanged=machineContext!==model.context;
+ if(machine)for(const field of ['a','b']as const)director.knob(machine.knobs[field].rotation,model.positions[field],contextChanged);
+ if(machine&&contextChanged){machineContext=model.context;director.camera(machine.camera.position,machine.target());}
  el('machine-info').innerHTML=`<p>${session.playback()?'Correspondencia del cálculo':'Vista previa de configuración'} · ${model.algorithm==='affine'?'Afín':model.algorithm==='caesar'?'César · +8 público':'Sin configuración'}</p><p>Entrada · A–Z / Salida · ${model.operation==='encrypt'?'Cifrar':'Descifrar'}</p><p data-testid="mapping">${model.mapping??'Configura una clave válida'}</p><p data-testid="positions">${model.algorithm==='affine'?`a=${model.positions.a??'sin posición'} · b=${model.positions.b??'sin posición'}`:''}</p>`;
  const selected=session.playback();if(machine)machine.rings.rotation.z=selected?2*Math.PI*selected.value.cipher.steps[selected.index].inputValue/26:0;
  if(guided)el('intro').innerHTML=intro(session.intro!,api,loading==='ready');

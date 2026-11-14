@@ -6,9 +6,9 @@ El objetivo es comprender las transformaciones matemáticas, experimentar con me
 
 ## Estado actual
 
-El repositorio contiene la visión, la arquitectura, la especificación del cifrado afín y la estructura inicial de directorios. Todavía no hay código de aplicación, manifiestos de compilación ni pruebas ejecutables; las funcionalidades descritas a continuación corresponden al alcance previsto.
+El repositorio incluye un workspace Cargo con la biblioteca `crypto-core`: aritmética modular, MCD, Euclides extendido, inverso modular y cifrado/descifrado César y afín, con errores tipados, trazas estructuradas y pruebas automatizadas. El núcleo usa entradas numéricas `i32` e intermedios exactos `i64`, sin dependencias externas.
 
-La especificación detallada de César y los contratos de información de las perspectivas están pendientes. El registro de decisiones y la especificación del sistema de animaciones se completarán cuando corresponda.
+La aplicación web, el adaptador WebAssembly, las animaciones y los contratos detallados de información de las perspectivas siguen pendientes; el alcance visual descrito a continuación es el previsto. El registro de decisiones y la especificación del sistema de animaciones se completarán cuando corresponda.
 
 ## Alcance inicial
 
@@ -23,7 +23,7 @@ La especificación detallada de César y los contratos de información de las pe
 
 ### Cifrados
 
-**César:** el desplazamiento acordado para el cifrado es de ocho letras. Los contratos de entrada, salida, errores y trazas se definirán en su especificación antes de implementarlo.
+**César:** usa un desplazamiento fijo de ocho letras sobre `A`–`Z`, con vuelta al inicio del alfabeto: `ABC → IJK`, `XYZ → FGH`. El descifrado resta ocho. El contrato completo está en su [especificación](./docs/specs/cipher-caesar.md).
 
 **Afín:** utiliza el alfabeto ASCII `A`–`Z`, representado por los enteros de `0` a `25`, con las operaciones:
 
@@ -33,9 +33,9 @@ Descifrado: D(y) = a⁻¹ × (y − b) mod 26
 Condición:  gcd(a, 26) = 1
 ```
 
-La clave `(5, 8)` transforma `ABC` en `INS`. Las claves no invertibles y los caracteres fuera del alfabeto admitido deberán producir errores explícitos. No se normalizarán automáticamente minúsculas, espacios, signos ni caracteres acentuados en esta primera versión. Las claves enteras equivalentes podrán normalizarse módulo 26, conservando resultados consistentes.
+La clave `(5, 8)` transforma `ABC` en `INS`. Ambos cifrados rechazan mensajes vacíos y caracteres fuera de `A`–`Z`, sin normalizar minúsculas, espacios, signos ni caracteres acentuados. Afín normaliza ambos parámetros enteros módulo 26, incluidos los negativos, y rechaza multiplicadores no invertibles antes de validar el mensaje. Los errores son explícitos y no devuelven resultados parciales.
 
-Cada carácter procesado tendrá una traza con su representación numérica, los parámetros, la operación modular y el resultado. Los requisitos y criterios de aceptación completos están en la [especificación del cifrado afín](./docs/specs/cipher-affine.md).
+Cada carácter procesado tiene una traza con su representación numérica, los operandos, el valor antes de la reducción modular y el resultado. Afín conserva la clave suministrada, la normalizada y la derivación del inverso mediante Euclides extendido. Los requisitos y criterios de aceptación completos están en la [especificación del cifrado afín](./docs/specs/cipher-affine.md).
 
 ### Perspectivas educativas
 
@@ -63,21 +63,27 @@ El flujo previsto es: entrada del usuario → `experience` → adaptador WASM �
 
 Rust será la única fuente de los resultados matemáticos. TypeScript y las animaciones consumirán esos resultados sin recalcularlos ni modificarlos. La aplicación ejecutará su lógica en el navegador mediante WebAssembly, sin requerir un servidor de aplicaciones.
 
-### Estructura inicial
+### Estructura
 
 ```text
 cryptolab/
 ├── AGENTS.md
 ├── README.md
+├── Cargo.toml
+├── Cargo.lock
 ├── docs/
 │   ├── VISION.md
 │   ├── ARCHITECTURE.md
 │   ├── DECISIONS.md
 │   └── specs/
+│       ├── math-foundations.md
+│       ├── cipher-caesar.md
 │       ├── cipher-affine.md
 │       └── animation-system.md
 ├── crates/
 │   ├── crypto-core/
+│   │   ├── Cargo.toml
+│   │   └── src/
 │   └── crypto-wasm/
 └── apps/
     └── web/
@@ -89,13 +95,43 @@ cryptolab/
         └── public/
 ```
 
-Los directorios de implementación aún están vacíos. Las instrucciones de instalación, compilación y ejecución se añadirán junto con los manifiestos y la aplicación ejecutable.
+`crypto-core` es el único miembro del workspace. Los directorios de `crypto-wasm` y del frontend siguen vacíos.
+
+## Compilación y uso del núcleo
+
+Requiere Rust y Cargo 1.85 o posteriores (edición 2024). Desde la raíz del repositorio:
+
+```sh
+cargo build --workspace --offline
+cargo test --workspace --offline
+cargo test --workspace --release --offline
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets --offline -- -D warnings
+cargo doc --workspace --no-deps --offline
+```
+
+Los comandos de formato y lint requieren `rustfmt` y Clippy instalados. El núcleo es una biblioteca, sin ejecutable ni servidor. No requiere descargas de dependencias. Ejemplo desde Rust:
+
+```rust
+use crypto_core::{affine, caesar, CryptoError};
+
+fn main() -> Result<(), CryptoError> {
+    let key = affine::AffineKey { a: 5, b: 8 };
+    let encrypted = affine::encrypt("ABC", key)?;
+    assert_eq!(encrypted.cipher.output, "INS");
+    assert_eq!(affine::decrypt("INS", key)?.cipher.output, "ABC");
+    assert_eq!(caesar::encrypt("XYZ")?.output, "FGH");
+    Ok(())
+}
+```
+
+Los contratos públicos son tipos Rust, sin serialización WASM todavía. Los resultados completos del núcleo contienen información privada de la simulación; los futuros adaptadores de perspectivas deberán proyectar solamente los datos autorizados para cada vista.
 
 ## Desarrollo y verificación
 
 El proyecto sigue desarrollo guiado por especificaciones (SDD). Antes de implementar una funcionalidad se consultan la visión, la arquitectura, las decisiones aceptadas y la especificación correspondiente. Los contratos y las pruebas de aceptación deben definirse antes de la implementación.
 
-La verificación prevista incluye:
+Las pruebas del núcleo verifican vectores conocidos, casos límite, errores, trazas y reversibilidad para las 312 claves afines normalizadas válidas. La estrategia general incluye:
 
 - **Rust:** vectores conocidos, casos límite, parámetros inválidos, reversibilidad, inversos modulares y consistencia entre resultados y trazas.
 - **WebAssembly:** contratos de entrada y salida, resultados y propagación de errores.
@@ -112,6 +148,8 @@ El alcance inicial excluye mundo abierto, multijugador, comunicación real entre
 
 - [Visión y alcance del producto](./docs/VISION.md).
 - [Arquitectura de software](./docs/ARCHITECTURE.md).
+- [Especificación de fundamentos matemáticos](./docs/specs/math-foundations.md).
+- [Especificación del cifrado César](./docs/specs/cipher-caesar.md).
 - [Especificación del cifrado afín](./docs/specs/cipher-affine.md).
 - [Decisiones técnicas](./docs/DECISIONS.md) — pendiente de contenido.
 - [Sistema de animaciones](./docs/specs/animation-system.md) — pendiente de contenido.

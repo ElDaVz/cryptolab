@@ -78,9 +78,19 @@ La normalización de minúsculas, espacios, signos y caracteres acentuados queda
 
 ### RF-006 — Claves equivalentes
 
-Los parámetros enteros podrán normalizarse módulo 26.
+Los parámetros enteros `i32` se normalizarán módulo 26, incluidos valores negativos y extremos. La validación de coprimalidad utiliza el valor normalizado de `a`.
 
 La normalización deberá producir resultados consistentes para claves equivalentes.
+
+### RF-007 — Contrato Rust y validación
+
+`crypto_core::affine::encrypt(message, key)` y `decrypt(message, key)` aceptarán una cadena y `AffineKey { a: i32, b: i32 }`, y devolverán `Result<AffineResult, CryptoError>`. Se valida primero la clave: una clave no invertible produce `InvalidAffineKey` con el factor suministrado, el normalizado y su MCD con 26. Después se rechaza la cadena vacía con `EmptyMessage`, o el primer carácter inválido con `InvalidCharacter` (carácter y desplazamiento de byte UTF-8 desde cero). No habrá resultados parciales. Los errores implementarán `Display` y `std::error::Error`.
+
+### RF-008 — Datos educativos
+
+`AffineResult` conserva la clave suministrada y la normalizada, el inverso de `a` normalizado, su derivación por Euclides extendido (una vez por operación) y un `CipherResult` común con César: operación, salida y pasos ordenados por carácter.
+
+Cada paso registra índice de byte, carácter y valor de entrada/salida, y una operación tipada con operandos, módulo, valor entero antes del módulo y residuo. En cifrado representa `(a*x+b)`; en descifrado representa `a⁻¹*(y-b)` sin sustituirla por otra fórmula. Los intermedios usan `i64`. Estos datos son internos, sin serialización ni proyección para el interceptor en este incremento.
 
 ## 4. Requisitos no funcionales
 
@@ -140,6 +150,14 @@ Para el carácter `A` y la clave `(5, 8)`, la traza deberá representar:
 ### CA-006 — Entradas inválidas
 
 Un mensaje que contenga caracteres fuera del alfabeto admitido deberá producir un error explícito y no un resultado parcial silencioso.
+
+### CA-007 — Casos límite y normalización
+
+Se rechazan mensajes vacíos. Se verifica la prioridad del error de clave sobre el error de mensaje, y el primer carácter inválido con su índice de byte. `(31,34)` y `(-21,-18)` producen los mismos resultados que `(5,8)` conservando sus claves suministradas. Se prueban claves con extremos `i32`.
+
+### CA-008 — Cobertura exhaustiva y derivación
+
+Se verifica reversibilidad del alfabeto completo para las 312 claves normalizadas válidas, rechazo de los restantes factores, consistencia de cada paso de cifrado/descifrado y la identidad de Bézout de la derivación del inverso.
 
 ## 6. Integración visual
 
@@ -207,6 +225,8 @@ Esta especificación requiere operaciones matemáticas correctas de:
 - Inverso modular.
 
 Estas operaciones deberán implementarse y verificarse antes de completar el cifrado afín.
+
+Su contrato se define en [Fundamentos matemáticos](./math-foundations.md). El incremento Rust puede completarse y verificarse por separado; la finalización de toda la funcionalidad sigue requiriendo la integración visual descrita en este documento.
 
 ## 11. Condición de finalización
 

@@ -1,0 +1,17 @@
+import{test,expect}from'@playwright/test';
+
+test('MI/AN/DE actual scene renders, controls fit, loss preserves text',async({page})=>{
+ await page.setViewportSize({width:1280,height:720});await page.goto('./');await page.getByRole('button',{name:'Omitir introducción'}).click();await expect(page.getByText('Motor matemático listo')).toBeVisible();
+ const canvas=page.locator('#machine canvas');await expect(canvas).toBeVisible();await expect.poll(()=>canvas.getAttribute('data-triangles')).toMatch(/^[1-9]\d*$/);
+ await page.getByLabel('Algoritmo').selectOption('affine');await page.getByLabel('a · Factor').fill('31');await expect(page.getByTestId('positions')).toContainText('a=5');
+ const bounds=await canvas.boundingBox();expect(bounds).not.toBeNull();expect(bounds!.x).toBeGreaterThanOrEqual(300);expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(980);
+ const aPosition=(await canvas.getAttribute('data-knob-a'))!.split(',').map(Number);await page.mouse.move(bounds!.x+aPosition[0],bounds!.y+aPosition[1]);await page.mouse.down();await page.mouse.move(bounds!.x+aPosition[0]+24,bounds!.y+aPosition[1]);await page.mouse.up();await expect(page.getByLabel('a · Factor')).toHaveValue('7');
+ await page.getByLabel('Mensaje',{exact:true}).fill('ABC');await page.getByRole('button',{name:'Ejecutar'}).click();const output=await page.getByTestId('output').textContent();await page.getByRole('button',{name:'Reproducir',exact:true}).click();await page.getByRole('button',{name:'Interceptor',exact:true}).click();await expect(page.getByLabel('a · Factor')).toHaveValue('');await expect(page.getByTestId('mapping')).toHaveText('Configura una clave válida');
+ await page.getByRole('button',{name:'Emisor',exact:true}).click();await expect(page.getByTestId('output')).toHaveText(output!);await page.getByRole('button',{name:'Siguiente carácter'}).click();
+ await canvas.evaluate(c=>{const gl=(c as HTMLCanvasElement).getContext('webgl2')!;gl.getExtension('WEBGL_lose_context')!.loseContext();});await expect(page.getByText(/Modo textual/)).toBeVisible();await expect(canvas).toHaveCount(0);await expect(page.getByTestId('output')).toHaveText(output!);await expect(page.getByTestId('equation')).toContainText('B');await page.getByRole('button',{name:'Siguiente carácter'}).click();await expect(page.getByTestId('equation')).toContainText('C');
+ await page.setViewportSize({width:900,height:650});await expect(page.getByRole('button',{name:'Ejecutar'})).toBeVisible();
+});
+
+test('AN reduced motion retains cadence and cancels when preference changes',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto('./');await page.getByRole('button',{name:'Omitir introducción'}).click();await expect(page.getByText('Motor matemático listo')).toBeVisible();await page.getByLabel('Mensaje',{exact:true}).fill('ABC');await page.getByRole('button',{name:'Ejecutar'}).click();await expect(page.getByTestId('output')).toHaveText('IJK');await page.getByRole('button',{name:'Reproducir',exact:true}).click();await expect(page.getByTestId('equation')).toContainText('B');await page.getByRole('button',{name:'Pausar',exact:true}).click();await page.emulateMedia({reducedMotion:'no-preference'});await expect(page.getByRole('button',{name:'Reproducir',exact:true})).toBeVisible();await page.getByRole('button',{name:'Volver al inicio'}).click();await expect(page.getByTestId('equation')).toContainText('A');
+});

@@ -15,7 +15,7 @@ function render(focusHeading=false){
  for(const id of ['navigation','preferences','left','right','bottom'])el(id).hidden=guided;
  el('intro').hidden=!guided;
  if(guided)el('intro').innerHTML=intro(session.intro!,api,loading==='ready');
- else{const view=renderView(session.project(),loading==='ready');el('left').innerHTML=view.left;el('right').innerHTML=view.right;el('bottom').innerHTML=playback(session.playback());}
+ else{const view=renderView(session.project(),loading==='ready',session.perspective==='interceptor'&&session.source==='exercise'?session.solution():null);el('left').innerHTML=view.left;el('right').innerHTML=view.right;el('bottom').innerHTML=playback(session.playback());}
  if(focusHeading)el(guided?'intro-title':'view-title')?.focus();
  else if(saved){const restored=document.getElementById(saved) as HTMLInputElement|HTMLTextAreaElement|null;restored?.focus();if(selection&&restored?.setSelectionRange)restored.setSelectionRange(selection[0],selection[1]);}
 }
@@ -34,6 +34,7 @@ root.addEventListener('click',event=>{
  if(action==='sender'||action==='interceptor'||action==='internal'){session.navigate(action);render(true);return;}
  if(action==='step'){session.stepKey(target.dataset.field as 'a'|'b',Number(target.dataset.delta));render();return;}
  if(action==='select'){session.select(Number(target.dataset.index));render();return;}
+ if(action==='hint')session.hint();if(action==='submit')session.submit();if(action==='reveal')session.reveal();if(action==='reset')session.resetExercise();if(action==='solution'){session.openSolution();render(true);return;}if(action==='return'){session.returnToOrigin();render(true);return;}
  const record=session.playback();if(action==='previous')session.select((record?.index??0)-1);if(action==='next')session.select((record?.index??0)+1);if(action==='start')session.select(0);
  render();
 });

@@ -24,7 +24,7 @@ export class Session {
  #draft:SenderDraft={algorithm:'caesar',operation:'encrypt',message:'',a:'5',b:'8'};
  #senderResult:ResultRecord|null=null;
  #senderError:ViewError|null=null;
- #snapshot:{algorithm:'caesar'|'affine';ciphertext:string}|null=null;
+ #snapshot:ResultRecord|null=null;
  #attempts:Record<Source,Attempt>={session:attempt(),exercise:attempt()};
  #status:'Sin resolver'|'Resuelto'|'Revelado'='Sin resolver';
  #hint=false;
@@ -52,7 +52,7 @@ export class Session {
   if(algorithm==='affine'){const key=parsedKey(this.#draft);if('code'in key){this.#senderError=key;return;}request={algorithm,operation,message,key};}
   else request={algorithm,operation,message};
   const result=this.run(request);if('code'in result){this.#senderError=result;return;}this.#senderResult=result;
-  if(operation==='encrypt'){this.#snapshot={algorithm,ciphertext:result.value.cipher.output};const a=this.#attempts.session;a.result=null;a.error=null;a.feedback=null;}
+  if(operation==='encrypt'){this.#snapshot=structuredClone(result);const a=this.#attempts.session;a.result=null;a.error=null;a.feedback=null;}
  }
  tryCandidate(){
   const a=this.#attempts[this.source];a.result=null;a.error=null;a.feedback=null;
@@ -62,7 +62,7 @@ export class Session {
   else request={algorithm:'caesar',operation:'decrypt',message:source.ciphertext};
   const result=this.run(request);if('code'in result)a.error=result;else a.result=result;
  }
- hint(){this.#hint=true;}
+ hint(){if(this.source==='exercise')this.#hint=true;}
  submit(){
   const a=this.#attempts.exercise;
   if(this.source!=='exercise'||this.#status!=='Sin resolver'||!a.result||a.result.value.algorithm!=='affine')return;
@@ -72,7 +72,8 @@ export class Session {
  }
  reveal(){if(this.source==='exercise'&&this.#status==='Sin resolver')this.#status='Revelado';}
  resetExercise(){this.#attempts.exercise=attempt();this.#status='Sin resolver';this.#hint=false;this.#solution=null;}
- private publicSource(){return this.source==='exercise'?{algorithm:'affine' as const,ciphertext:exerciseCiphertext}:this.#snapshot;}
+ private sourceData(source:Source){return source==='exercise'?{algorithm:'affine' as const,ciphertext:exerciseCiphertext}:this.#snapshot?{algorithm:this.#snapshot.value.algorithm,ciphertext:this.#snapshot.value.cipher.output}:null;}
+ private publicSource(){return this.sourceData(this.source);}
  private result(context:Context):ResultRecord|null {return context==='sender'?this.#senderResult:context==='solution'?(this.#status==='Sin resolver'?null:this.#solution):this.#attempts[context].result;}
  private activeContext():Context{return this.perspective==='internal'?this.#origin:this.perspective==='sender'?'sender':this.source;}
  select(index:number){const result=this.result(this.activeContext());if(result&&Number.isInteger(index)&&index>=0&&index<result.value.cipher.steps.length)result.index=index;}
@@ -83,14 +84,13 @@ export class Session {
  interceptor(){const source=this.publicSource(),a=this.#attempts[this.source];return structuredClone({source:this.source,algorithm:source?.algorithm??null,ciphertext:source?.ciphertext??null,key:a.key,candidate:a.result?.value.cipher.output??null,error:a.error,status:this.source==='exercise'?this.#status:null,feedback:a.feedback,hint:this.source==='exercise'&&this.#hint?'El factor multiplicativo normalizado es a=7. Prueba los desplazamientos b del 0 al 25.':null,canSubmit:this.source==='exercise'&&this.#status==='Sin resolver'&&a.result!==null});}
  internal(){const labels:Record<Context,string>={sender:'Operación del emisor',session:'Intento candidato · Cifrado de la sesión',exercise:'Intento candidato · Ejercicio preparado',solution:'Solución original · Ejercicio preparado'};return structuredClone({origin:this.#origin,label:labels[this.#origin],result:this.result(this.#origin)});}
  solution(){return this.#status==='Sin resolver'?null:{message:exerciseMessage,key:{a:7,b:3},status:this.#status};}
- project(){return this.perspective==='sender'?{view:'sender' as const,...this.sender()}:this.perspective==='interceptor'?{view:'interceptor' as const,...this.interceptor(),solution:this.solutionForSource() }:{view:'internal' as const,...this.internal()};}
- private solutionForSource(){return this.source==='exercise'?this.solution():null;}
+ project(){return this.perspective==='sender'?{view:'sender' as const,...this.sender()}:this.perspective==='interceptor'?{view:'interceptor' as const,...this.interceptor()}:{view:'internal' as const,...this.internal()};}
  playback(){return structuredClone(this.result(this.activeContext()));}
  machine(){
   const context=this.activeContext();let algorithm:'caesar'|'affine'|null=null,operation:Direction='encrypt',key:PartialKey={a:null,b:null};
   let request:CipherRequest|null=null;
   if(context==='sender'){algorithm=this.#draft.algorithm;operation=this.#draft.operation;key={a:keyNumber(this.#draft.a),b:keyNumber(this.#draft.b)};}
-  else if(context==='session'||context==='exercise'){const source=context==='exercise'?{algorithm:'affine' as const,ciphertext:exerciseCiphertext}:this.#snapshot;algorithm=source?.algorithm??null;operation='decrypt';const draft=this.#attempts[context].key;key={a:keyNumber(draft.a),b:keyNumber(draft.b)};}
+  else if(context==='session'||context==='exercise'){const source=this.sourceData(context);algorithm=source?.algorithm??null;operation='decrypt';const draft=this.#attempts[context].key;key={a:keyNumber(draft.a),b:keyNumber(draft.b)};}
   if(this.perspective==='internal'){const result=this.result(context);if(result){request={...result.request,message:alphabet};algorithm=result.value.algorithm;operation=result.request.operation;key=result.value.algorithm==='affine'?result.value.suppliedKey:{a:null,b:null};}else algorithm=null;}
   else if(algorithm==='caesar')request={algorithm,operation,message:alphabet};
   else if(algorithm==='affine'&&key.a!==null&&key.b!==null)request={algorithm,operation,message:alphabet,key:{a:key.a,b:key.b}};

@@ -58,3 +58,8 @@ rustc-ice-*.txt
 
 # Local JetBrains IDE configuration
 .idea/
+
+# Project-local toolchains and browser/test artifacts
+.tools/
+test-results/
+playwright-report/

@@ -131,4 +131,6 @@ Estas extensiones no forman parte del compromiso inicial y deberán especificars
 - [Especificación del cifrado afín](./specs/cipher-affine.md)
 - [Recorrido de aprendizaje y sesión](./specs/learning-flow.md)
 - [Perspectivas e información visible](./specs/perspectives.md)
+- [Máquina e interacción](./specs/machine-interaction.md)
+- [Experiencia de escritorio](./specs/desktop-experience.md)
 - [Instrucciones para agentes](../AGENTS.md)

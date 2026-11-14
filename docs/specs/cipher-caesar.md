@@ -15,7 +15,7 @@ D(y) = (y - 8) mod 26
 
 El resultado contiene operación (`Encrypt`/`Decrypt`), salida y pasos ordenados por carácter. Cada paso contiene índice de byte, carácter/valor de entrada y salida, y una operación aritmética tipada con los operandos, módulo, valor entero antes del módulo y residuo. En descifrado el operando de desplazamiento es -8. No se calcula ninguna transformación en TypeScript ni en animaciones.
 
-Las estructuras comunes se comparten con el [cifrado afín](./cipher-affine.md). No se fija todavía un contrato de serialización. Estas trazas son datos internos educativos y no constituyen una proyección para el interceptor; el filtrado y los contextos autorizados se definen en [Perspectivas](./perspectives.md).
+Las estructuras comunes se comparten con el [cifrado afín](./cipher-affine.md). La serialización se define en [Integración WASM](./wasm-integration.md), sin cambiar los tipos del núcleo. Estas trazas son datos internos educativos y no constituyen una proyección para el interceptor; el filtrado y los contextos autorizados se definen en [Perspectivas](./perspectives.md).
 
 ## Criterios de aceptación
 

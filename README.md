@@ -8,7 +8,7 @@ El objetivo es comprender las transformaciones matemáticas, experimentar con me
 
 El repositorio incluye un workspace Cargo con la biblioteca `crypto-core`: aritmética modular, MCD, Euclides extendido, inverso modular y cifrado/descifrado César y afín, con errores tipados, trazas estructuradas y pruebas automatizadas. El núcleo usa entradas numéricas `i32` e intermedios exactos `i64`, sin dependencias externas.
 
-El recorrido de aprendizaje y los contratos de información de las perspectivas ya están especificados. La aplicación web, las proyecciones por perspectiva, el adaptador WebAssembly y las animaciones siguen pendientes de implementación; el alcance visual descrito a continuación es el previsto. El registro de decisiones y la especificación del sistema de animaciones se completarán cuando corresponda.
+Ya están especificados el recorrido de aprendizaje, las perspectivas, la máquina e interacción, la experiencia de escritorio, las animaciones/audio y la integración WebAssembly. La aplicación web, las proyecciones, el adaptador WASM y la escena siguen pendientes de implementación; el alcance visual descrito a continuación es el previsto. El registro de decisiones recoge el contrato de integración acordado para esta primera demo.
 
 ## Alcance inicial
 
@@ -55,6 +55,14 @@ El ejercicio afín permitirá probar candidatos manualmente y enviar una clave p
 
 Las reglas de edición, invalidación de resultados, instantáneas interceptables, ayuda y reinicio están en el [recorrido de aprendizaje y sesión](./docs/specs/learning-flow.md). Estos comportamientos están especificados, pero aún no implementados.
 
+### Primera demo de escritorio prevista
+
+La demo completa se dirigirá inicialmente a Chromium de escritorio, desde 1280×720. Mostrará una máquina procedural sobre una mesa, con anillos concéntricos, indicador fijo, perillas `a`/`b` editables y tres cámaras predefinidas. La correspondencia exterior se obtendrá de Rust; los giros seleccionarán una pareja de letras sin representar la multiplicación afín como una rotación uniforme.
+
+Los formularios y explicaciones estarán en paneles flotantes con equivalentes de teclado para los controles 3D. La UI admitirá hasta 256 caracteres sin truncar ni normalizar el texto; el núcleo Rust conservará su dominio actual. La salida completa aparecerá inmediatamente y la animación de un carácter por segundo empezará solo por solicitud. Habrá movimiento reducido, audio mecánico opcional inicialmente silenciado y uso textual completo si falla WebGL.
+
+La entrega incluirá desarrollo local y build estático, sin publicación automática. Los contratos están en [Máquina e interacción](./docs/specs/machine-interaction.md), [Escritorio](./docs/specs/desktop-experience.md), [Animaciones y audio](./docs/specs/animation-system.md) e [Integración WASM](./docs/specs/wasm-integration.md).
+
 ## Tecnologías y arquitectura
 
 | Componente | Tecnología y responsabilidad |
@@ -89,6 +97,9 @@ cryptolab/
 │       ├── cipher-affine.md
 │       ├── learning-flow.md
 │       ├── perspectives.md
+│       ├── machine-interaction.md
+│       ├── desktop-experience.md
+│       ├── wasm-integration.md
 │       └── animation-system.md
 ├── crates/
 │   ├── crypto-core/
@@ -137,6 +148,20 @@ fn main() -> Result<(), CryptoError> {
 
 Los contratos públicos son tipos Rust, sin serialización WASM todavía. Los resultados completos del núcleo contienen información privada de la simulación; los futuros adaptadores de perspectivas deberán proyectar solamente los datos autorizados para cada vista.
 
+## Hoja de ruta de la primera demo
+
+Estas etapas están planificadas, no implementadas. Los comandos futuros de WASM/npm y sus requisitos se definen en [Integración WASM](./docs/specs/wasm-integration.md); todavía no existen el paquete frontend, sus scripts ni el adaptador. Las instrucciones Cargo anteriores sí corresponden al código actual.
+
+| Etapa | Entrega y comprobación para completarla |
+| --- | --- |
+| 1. Frontera WASM | Añadir `crypto-wasm`, fijar herramientas/dependencias y generar bindings; verificar solicitudes, errores, exactitud y paridad con Rust mediante las pruebas WA. |
+| 2. Estado y perspectivas | Implementar `experience` sin depender del renderizado; verificar el recorrido FL y las proyecciones PE, incluidas invalidación, contexto y solución del ejercicio. |
+| 3. Interfaz completa | Implementar introducción, ambos cifrados, ejercicio, resultados y trazas textuales con teclado; verificar DE para estado, DOM, límites y errores. |
+| 4. Máquina y presentación | Construir escena procedural, cámaras, perillas, reproducción y audio opcional; verificar MI/AN, movimiento reducido, limpieza y degradación textual. |
+| 5. Demo distribuible | Ejecutar el recorrido completo con Playwright/Chromium sobre el build release real, también en `/cryptolab/`, y revisar manualmente legibilidad, encuadres y sonido. Registrar versiones y resultados ejecutados. |
+
+La prueba de extremo a extremo debe completar/omitir y repetir la introducción, cifrar y descifrar con César y afín, inspeccionar las trazas, interceptar la sesión y resolver o revelar/reiniciar el ejercicio en sesiones separadas. Debe comprobar también la ausencia de datos privados en el modelo interceptor, cancelación de reproducción, entrada inválida, límite de 256 caracteres y funcionamiento con movimiento reducido o sin WebGL. La inspección visual complementa estas pruebas; no demuestra por sí sola corrección matemática.
+
 ## Desarrollo y verificación
 
 El proyecto sigue desarrollo guiado por especificaciones (SDD). Antes de implementar una funcionalidad se consultan la visión, la arquitectura, las decisiones aceptadas y la especificación correspondiente. Los contratos y las pruebas de aceptación deben definirse antes de la implementación.
@@ -163,6 +188,9 @@ El alcance inicial excluye mundo abierto, multijugador, comunicación real entre
 - [Especificación del cifrado afín](./docs/specs/cipher-affine.md).
 - [Recorrido de aprendizaje y sesión](./docs/specs/learning-flow.md).
 - [Perspectivas e información visible](./docs/specs/perspectives.md).
-- [Decisiones técnicas](./docs/DECISIONS.md) — pendiente de contenido.
-- [Sistema de animaciones](./docs/specs/animation-system.md) — pendiente de contenido.
+- [Máquina e interacción](./docs/specs/machine-interaction.md).
+- [Experiencia de escritorio](./docs/specs/desktop-experience.md).
+- [Integración WebAssembly](./docs/specs/wasm-integration.md).
+- [Decisiones técnicas](./docs/DECISIONS.md).
+- [Animaciones y audio](./docs/specs/animation-system.md).
 - [Instrucciones de desarrollo para agentes](./AGENTS.md).

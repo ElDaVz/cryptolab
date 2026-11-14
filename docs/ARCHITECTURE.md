@@ -119,6 +119,8 @@ criptográficos ni implementar operaciones matemáticas.
 Las secuencias deberán admitir cancelación, reinicio
 y control de reproducción.
 
+La [especificación de animaciones y audio](./specs/animation-system.md) concreta reproducción, cancelación y limpieza para la primera demo. La [máquina procedural](./specs/machine-interaction.md) consume tablas alfabéticas Rust y trazas autorizadas; sus consultas de previsualización no son operaciones de mensaje ni modifican la sesión interceptable.
+
 ### 4.5. ui
 
 Módulo responsable de:
@@ -158,6 +160,8 @@ Las trazas deben ser datos estructurados, no únicamente cadenas de texto.
 Esto permitirá generar explicaciones y animaciones sin interpretar expresiones matemáticas arbitrarias.
 
 La estructura definitiva de los contratos se establecerá en las especificaciones funcionales.
+
+La primera frontera pública para navegador se define en [Integración WASM](./specs/wasm-integration.md), con DTO del adaptador y tipos TypeScript explícitos. La decisión de transporte, exactitud numérica y empaquetado se registra en [ADR-001](./DECISIONS.md). La [experiencia de escritorio](./specs/desktop-experience.md) establece el límite de mensaje de la UI sin modificar el dominio Rust.
 
 ## 7. Gestión de perspectivas
 
@@ -255,4 +259,9 @@ Cada decisión relevante deberá documentarse antes de consolidarse en la implem
 - [Especificación del cifrado afín](./specs/cipher-affine.md)
 - [Recorrido de aprendizaje y sesión](./specs/learning-flow.md)
 - [Perspectivas e información visible](./specs/perspectives.md)
+- [Máquina e interacción](./specs/machine-interaction.md)
+- [Experiencia de escritorio](./specs/desktop-experience.md)
+- [Animaciones y audio](./specs/animation-system.md)
+- [Integración WASM](./specs/wasm-integration.md)
+- [Decisiones técnicas](./DECISIONS.md)
 - [Instrucciones para agentes](../AGENTS.md)

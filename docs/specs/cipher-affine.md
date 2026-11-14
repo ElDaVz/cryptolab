@@ -179,8 +179,7 @@ utilizando las trazas estructuradas generadas por Rust.
 Las animaciones deberán conservar la correspondencia
 entre cada operación matemática y su representación visual.
 
-La estrategia de animación se define en
-[Arquitectura de software](../ARCHITECTURE.md).
+La estrategia de animación se define en [Animaciones y audio](./animation-system.md), dentro de los límites de la [Arquitectura de software](../ARCHITECTURE.md). Los anillos utilizan las correspondencias especificadas en [Máquina e interacción](./machine-interaction.md); la serialización del resultado corresponde a [Integración WASM](./wasm-integration.md).
 
 ## 7. Perspectivas
 

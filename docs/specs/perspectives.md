@@ -4,7 +4,7 @@
 
 Definir la información que reciben las perspectivas de emisor, interceptor y mecanismo interno. Las tres representan una sesión educativa; cambiar de cámara o perspectiva no ejecuta cifrados ni modifica claves, mensajes o resultados.
 
-El [recorrido de aprendizaje](./learning-flow.md) define navegación, fuentes, intentos, calificación, reinicio e invalidación de resultados. Esta especificación define sus proyecciones de información, con independencia del diseño visual y del futuro contrato de serialización WASM.
+El [recorrido de aprendizaje](./learning-flow.md) define navegación, fuentes, intentos, calificación, reinicio e invalidación de resultados. Esta especificación define sus proyecciones de información, con independencia del diseño visual y del contrato de transporte de [Integración WASM](./wasm-integration.md).
 
 La aplicación se ejecuta en el navegador. La separación es parte de la simulación y **no es una garantía de confidencialidad ante quien controla o inspecciona su navegador**. Tampoco puede hacer que el usuario olvide una clave que introdujo en el emisor o una solución revelada previamente.
 
@@ -75,9 +75,9 @@ Son escenarios para futuras pruebas de proyección y estado, independientes de T
 
 ## 6. Dependencias y finalización
 
-Las futuras pruebas de frontend verificarán listas explícitas de campos permitidos y excluidos, además de transiciones del recorrido. WASM transportará resultados del dominio según su futura especificación; el filtrado por perspectiva seguirá siendo responsabilidad de `experience`, sin acoplar `crypto-core` a roles o pantallas.
+Las futuras pruebas de frontend verificarán listas explícitas de campos permitidos y excluidos, además de transiciones del recorrido. WASM transportará resultados del dominio según su [especificación](./wasm-integration.md); el filtrado por perspectiva seguirá siendo responsabilidad de `experience`, sin acoplar `crypto-core` a roles o pantallas.
 
-La documentación está completa al fijar estas reglas y escenarios. La funcionalidad de perspectivas solo se considerará implementada cuando existan las proyecciones, la navegación y las pruebas correspondientes. Los detalles de cámara, componentes 3D, reproducción y accesibilidad visual se desarrollarán en sus especificaciones posteriores.
+La documentación está completa al fijar estas reglas y escenarios. La funcionalidad de perspectivas solo se considerará implementada cuando existan las proyecciones, la navegación y las pruebas correspondientes. Las cámaras y controles se definen en [Máquina](./machine-interaction.md), la reproducción en [Animaciones](./animation-system.md) y la accesibilidad en [Escritorio](./desktop-experience.md).
 
 ## Documentos relacionados
 
@@ -86,3 +86,7 @@ La documentación está completa al fijar estas reglas y escenarios. La funciona
 - [Visión del proyecto](../VISION.md)
 - [Cifrado César](./cipher-caesar.md)
 - [Cifrado afín](./cipher-affine.md)
+- [Máquina e interacción](./machine-interaction.md)
+- [Animaciones y audio](./animation-system.md)
+- [Experiencia de escritorio](./desktop-experience.md)
+- [Integración WASM](./wasm-integration.md)

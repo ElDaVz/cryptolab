@@ -6,7 +6,7 @@ Definir el recorrido inicial en español: una introducción guiada que se puede 
 
 Los contratos de información por vista se establecen en [Perspectivas](./perspectives.md). Los cálculos, validaciones y trazas proceden exclusivamente del núcleo Rust, según [César](./cipher-caesar.md), [Afín](./cipher-affine.md) y [Fundamentos matemáticos](./math-foundations.md).
 
-Este incremento documental no define serialización WASM, diseño visual, componentes 3D ni reproducción de animaciones. No añade persistencia, historial de intentos, resolución automática ni análisis de frecuencias. Los cifrados se presentan exclusivamente como herramientas educativas, sin seguridad moderna.
+Este documento define el recorrido y el estado. Lo complementan los contratos de [WASM](./wasm-integration.md), [escritorio](./desktop-experience.md), [máquina](./machine-interaction.md) y [animaciones](./animation-system.md). No añade persistencia, historial de intentos, resolución automática ni análisis de frecuencias. Los cifrados se presentan exclusivamente como herramientas educativas, sin seguridad moderna.
 
 ## 2. Entrada e introducción
 
@@ -29,7 +29,7 @@ Al terminar u omitir la introducción inicial se abre el laboratorio en la persp
 
 El emisor puede elegir César o afín, introducir un mensaje y ejecutar `Cifrar` o `Descifrar`. César no tiene campo de clave configurable. Afín acepta parámetros enteros con signo dentro de `i32`, conserva los suministrados y muestra su forma normalizada tras una operación válida.
 
-Los formularios no convierten automáticamente mensajes a mayúsculas ni eliminan espacios o acentos. Los campos de clave vacíos, no enteros o fuera de `i32` deben indicar un error de entrada y no ejecutar la operación. Una vez representables las entradas, el núcleo determina los errores de dominio, incluida la prioridad de clave inválida sobre mensaje inválido en afín. Los errores se explican en español y conservan los datos estructurados del núcleo.
+Los formularios no convierten automáticamente mensajes a mayúsculas ni eliminan espacios o acentos. Los campos de clave vacíos, no enteros o fuera de `i32` deben indicar un error de entrada y no ejecutar la operación. La demo aplica después el límite de 256 caracteres de [Escritorio](./desktop-experience.md); superarlo no trunca ni envía el mensaje. Superadas esas restricciones de UI, el núcleo determina los errores de dominio, incluida la prioridad de clave inválida sobre mensaje inválido en afín. Los errores se explican en español y conservan los datos estructurados del núcleo.
 
 | Acción | Efecto en el estado |
 | --- | --- |
@@ -108,7 +108,7 @@ Estos escenarios son requisitos para las futuras pruebas del estado y la interfa
 | FL-07 | César declara su desplazamiento conocido y recupera el texto con −8; afín permite candidatos manuales con texto y traza, sin calificación al probar. |
 | FL-08 | El vector fijo cifra y descifra correctamente con `(7,3)`; `(7,4)` produce el candidato documentado, y `(33,29)` recupera el original. |
 | FL-09 | Probar `(7,3)` conserva `Sin resolver` hasta enviar. Un envío incorrecto permite continuar; uno correcto o equivalente pasa a `Resuelto`. Editar o cambiar de fuente impide enviar un intento obsoleto. |
-| FL-10 | La pista revela únicamente el multiplicador acordado y registra su uso. Revelar la solución produce `Revelado`, nunca `Resuelto`, incluso tras probar o enviar después la clave correcta. |
+| FL-10 | La pista revela únicamente el multiplicador acordado y registra su uso. Revelar la solución produce `Revelado`, nunca `Resuelto`, incluso tras probar después la clave correcta; los envíos siguen deshabilitados hasta reiniciar. |
 | FL-11 | Reiniciar borra únicamente el trabajo del ejercicio y vuelve a ocultar su solución. Recargar descarta también el laboratorio y vuelve a la introducción. |
 
 ## Documentos relacionados
@@ -119,3 +119,7 @@ Estos escenarios son requisitos para las futuras pruebas del estado y la interfa
 - [César](./cipher-caesar.md)
 - [Afín](./cipher-affine.md)
 - [Fundamentos matemáticos](./math-foundations.md)
+- [Experiencia de escritorio](./desktop-experience.md)
+- [Máquina e interacción](./machine-interaction.md)
+- [Animaciones y audio](./animation-system.md)
+- [Integración WASM](./wasm-integration.md)

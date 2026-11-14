@@ -9,7 +9,7 @@ El módulo `crypto_core::math` ofrecerá funciones puras con entradas `i32`, sin
 - `extended_gcd(a, b)`: MCD, coeficientes `x`, `y` que satisfacen `a*x + b*y = gcd(a,b)`, y divisiones ordenadas sobre las magnitudes no negativas de las entradas. Cada división contiene dividendo, divisor, cociente y residuo. Los signos originales se restauran en los coeficientes finales. Para `(0,0)` devuelve coeficientes cero y traza vacía.
 - `modular_inverse(value, modulus)`: inverso normalizado y derivación por Euclides extendido sobre las entradas originales; requiere módulo ≥2 y MCD igual a 1.
 
-Los errores serán variantes tipadas de `CryptoError`, con implementación de `Display` y `std::error::Error`: módulo inválido (valor y mínimo requerido) o inverso inexistente (valor, módulo y MCD). Las estructuras públicas serán datos Rust, sin contrato de serialización todavía.
+Los errores serán variantes tipadas de `CryptoError`, con implementación de `Display` y `std::error::Error`: módulo inválido (valor y mínimo requerido) o inverso inexistente (valor, módulo y MCD). Las estructuras públicas del núcleo siguen siendo datos Rust; los DTO y conversiones del navegador se definen separadamente en [Integración WASM](./wasm-integration.md), sin serialización dentro del dominio.
 
 ## Criterios de aceptación
 

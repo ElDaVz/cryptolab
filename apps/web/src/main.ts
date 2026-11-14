@@ -3,17 +3,27 @@ import{Session,type SenderDraft,type KeyDraft}from'./experience/session';
 import{button,renderView,playback}from'./ui/views';
 import{intro}from'./ui/intro';
 import'./ui/style.css';
+import{Machine}from'./machine/Machine';
+import{AnimationDirector}from'./machine/AnimationDirector';
 const root=document.querySelector<HTMLElement>('#app')!;
 const session=new Session(api);
 let loading:'loading'|'ready'|'failed'='loading';let repeated=false;
-root.innerHTML=`<header><a class="brand" href="./">CRIPTO<span>LAB</span></a><nav id="navigation" aria-label="Perspectivas">${button('sender','Emisor')}${button('interceptor','Interceptor')}${button('internal','Mecanismo interno')}${button('intro-repeat','Repetir introducción',false,'id="repeat"')}</nav><div id="preferences">${button('audio','Sonido: desactivado')}<label><input type="checkbox" id="reduced"> Reducir movimiento</label></div></header><div id="engine" role="status"></div><div id="render-notice"></div><div id="machine" aria-hidden="true"></div><div id="intro" class="panel intro-panel"></div><section id="left" class="panel" aria-label="Configuración" tabindex="-1"></section><section id="right" class="panel" aria-label="Resultado y explicación" tabindex="0"></section><section id="bottom" class="panel" aria-label="Selección y reproducción"></section><footer>Matemática discreta · A–Z / módulo 26 · Uso educativo, sin seguridad moderna</footer>`;
+root.innerHTML=`<header><a class="brand" href="./">CRIPTO<span>LAB</span></a><nav id="navigation" aria-label="Perspectivas">${button('sender','Emisor')}${button('interceptor','Interceptor')}${button('internal','Mecanismo interno')}${button('intro-repeat','Repetir introducción',false,'id="repeat"')}</nav><div id="preferences">${button('audio','Sonido: desactivado')}<label><input type="checkbox" id="reduced"> Reducir movimiento</label></div></header><div id="engine" role="status"></div><div id="render-notice"></div><div id="machine" aria-hidden="true"></div><aside id="machine-info" class="machine-info"></aside><div id="intro" class="panel intro-panel"></div><section id="left" class="panel" aria-label="Configuración" tabindex="-1"></section><section id="right" class="panel" aria-label="Resultado y explicación" tabindex="0"></section><section id="bottom" class="panel" aria-label="Selección y reproducción"></section><footer>Matemática discreta · A–Z / módulo 26 · Uso educativo, sin seguridad moderna</footer>`;
 const el=(id:string)=>document.getElementById(id)!;
+const director=new AnimationDirector();
+let machine:Machine|null=null;let machineContext='';
+function loseWebGL(){director.destroy();machine?.destroy();machine=null;el('render-notice').textContent='Modo textual: WebGL no está disponible. Todos los cálculos y controles siguen disponibles.';}
+try{machine=new Machine(el('machine'),loseWebGL);}catch{loseWebGL();}
 function render(focusHeading=false){
  const active=document.activeElement as HTMLInputElement|HTMLTextAreaElement|null;const saved=active?.id;const selection=active?.tagName==='TEXTAREA'||(active?.tagName==='INPUT'&&active.type==='text')?[active.selectionStart,active.selectionEnd]:null;
  el('engine').innerHTML=loading==='ready'?'Motor matemático listo':loading==='loading'?'Cargando motor matemático…':`No se pudo cargar el motor matemático ${button('retry','Reintentar')}`;
  const guided=session.intro!==null;
  for(const id of ['navigation','preferences','left','right','bottom'])el(id).hidden=guided;
- el('intro').hidden=!guided;
+ el('intro').hidden=!guided;el('machine').hidden=guided;el('machine-info').hidden=guided;
+ const model=session.machine();machine?.update(model);
+ if(machine&&machineContext!==model.context){machineContext=model.context;director.camera(machine.camera.position,machine.target());}
+ el('machine-info').innerHTML=`<p>${session.playback()?'Correspondencia del cálculo':'Vista previa de configuración'} · ${model.algorithm==='affine'?'Afín':model.algorithm==='caesar'?'César · +8 público':'Sin configuración'}</p><p>Entrada · A–Z / Salida · ${model.operation==='encrypt'?'Cifrar':'Descifrar'}</p><p data-testid="mapping">${model.mapping??'Configura una clave válida'}</p><p data-testid="positions">${model.algorithm==='affine'?`a=${model.positions.a??'sin posición'} · b=${model.positions.b??'sin posición'}`:''}</p>`;
+ const selected=session.playback();if(machine)machine.rings.rotation.z=selected?2*Math.PI*selected.value.cipher.steps[selected.index].inputValue/26:0;
  if(guided)el('intro').innerHTML=intro(session.intro!,api,loading==='ready');
  else{const view=renderView(session.project(),loading==='ready',session.perspective==='interceptor'&&session.source==='exercise'?session.solution():null);el('left').innerHTML=view.left;el('right').innerHTML=view.right;el('bottom').innerHTML=playback(session.playback());}
  if(focusHeading)el(guided?'intro-title':'view-title')?.focus();
@@ -40,3 +50,5 @@ root.addEventListener('click',event=>{
 });
 async function initialize(){loading='loading';render();try{await api.initialize();loading='ready';}catch{loading='failed';}render();}
 render();void initialize();
+
+window.addEventListener('pagehide',()=>{director.destroy();machine?.destroy();},{once:true});

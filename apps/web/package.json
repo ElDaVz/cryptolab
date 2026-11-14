@@ -18,7 +18,8 @@
     "wasm:dev": "node ../../scripts/wasm.mjs dev",
     "wasm:release": "node ../../scripts/wasm.mjs release",
     "test:wasm": "node ../../scripts/check-wasm.mjs",
-    "prebuild": "node ../../scripts/wasm.mjs release"
+    "prebuild": "node ../../scripts/wasm.mjs release",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "gsap": "3.15.1",

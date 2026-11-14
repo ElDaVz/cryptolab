@@ -14,7 +14,10 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "npm run build && playwright test"
+    "test:e2e": "npm run build && playwright test",
+    "wasm:dev": "node ../../scripts/wasm.mjs dev",
+    "wasm:release": "node ../../scripts/wasm.mjs release",
+    "test:wasm": "node ../../scripts/check-wasm.mjs"
   },
   "dependencies": {
     "gsap": "3.15.1",

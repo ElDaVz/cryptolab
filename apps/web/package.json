@@ -17,7 +17,8 @@
     "test:e2e": "npm run build && playwright test",
     "wasm:dev": "node ../../scripts/wasm.mjs dev",
     "wasm:release": "node ../../scripts/wasm.mjs release",
-    "test:wasm": "node ../../scripts/check-wasm.mjs"
+    "test:wasm": "node ../../scripts/check-wasm.mjs",
+    "prebuild": "node ../../scripts/wasm.mjs release"
   },
   "dependencies": {
     "gsap": "3.15.1",

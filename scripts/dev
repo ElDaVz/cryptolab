@@ -1,0 +1,3 @@
+#!/bin/sh
+# Environment changes are confined to this process and its children.
+exec node "$(dirname "$0")/dev.mjs" "$@"

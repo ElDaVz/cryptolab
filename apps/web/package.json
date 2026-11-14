@@ -1,0 +1,31 @@
+{
+  "name": "cryptolab-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": "26.13.0",
+    "npm": "12.2.2"
+  },
+  "scripts": {
+    "predev": "node ../../scripts/wasm.mjs dev",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "npm run build && playwright test"
+  },
+  "dependencies": {
+    "gsap": "3.15.1",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "26.6.6",
+    "@types/three": "0.187.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

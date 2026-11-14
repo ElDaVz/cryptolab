@@ -8,7 +8,7 @@ El objetivo es comprender las transformaciones matemáticas, experimentar con me
 
 El repositorio incluye un workspace Cargo con la biblioteca `crypto-core`: aritmética modular, MCD, Euclides extendido, inverso modular y cifrado/descifrado César y afín, con errores tipados, trazas estructuradas y pruebas automatizadas. El núcleo usa entradas numéricas `i32` e intermedios exactos `i64`, sin dependencias externas.
 
-La aplicación web, el adaptador WebAssembly, las animaciones y los contratos detallados de información de las perspectivas siguen pendientes; el alcance visual descrito a continuación es el previsto. El registro de decisiones y la especificación del sistema de animaciones se completarán cuando corresponda.
+El recorrido de aprendizaje y los contratos de información de las perspectivas ya están especificados. La aplicación web, las proyecciones por perspectiva, el adaptador WebAssembly y las animaciones siguen pendientes de implementación; el alcance visual descrito a continuación es el previsto. El registro de decisiones y la especificación del sistema de animaciones se completarán cuando corresponda.
 
 ## Alcance inicial
 
@@ -41,11 +41,19 @@ Cada carácter procesado tiene una traza con su representación numérica, los o
 
 | Perspectiva | Información y propósito previstos |
 | --- | --- |
-| Emisor | Introducir el mensaje, configurar la máquina y consultar la clave y el resultado cifrado. |
-| Interceptor | Consultar el mensaje cifrado y explorar técnicas de criptoanálisis sin recibir directamente la clave original ni las trazas privadas. |
-| Mecanismo interno | Inspeccionar las operaciones matemáticas mediante las trazas generadas por Rust. |
+| Emisor | Cifrar o descifrar con César y afín, configurar su clave y consultar su propio resultado. |
+| Interceptor | Examinar el último cifrado válido de la sesión o un ejercicio preparado; probar claves afines sin recibir la clave original ni sus trazas privadas. César utiliza el desplazamiento público +8. |
+| Mecanismo interno | Inspeccionar las trazas Rust de la operación del emisor o del intento candidato. La solución original del ejercicio solo está disponible tras resolverlo o revelarlo explícitamente. |
 
-Las vistas serán proyecciones de una misma sesión; cambiar de perspectiva deberá conservar el mensaje, la clave y los resultados. Los contratos detallados de información se especificarán posteriormente. Esta separación tiene un propósito educativo y no garantiza confidencialidad frente a quien inspeccione su propio navegador.
+Las vistas serán proyecciones de una misma sesión; cambiar de perspectiva conservará el trabajo de cada contexto. Los campos permitidos y excluidos se definen en [Perspectivas](./docs/specs/perspectives.md). Esta separación tiene un propósito educativo y no garantiza confidencialidad frente a quien inspeccione su propio navegador.
+
+### Recorrido de aprendizaje previsto
+
+La aplicación comenzará con una introducción en español que se puede omitir y repetir: letras y números, César con vuelta al inicio del alfabeto, cifrado afín y descifrado mediante el inverso modular. Después abrirá el laboratorio libre. Repetir la introducción no modificará el trabajo del laboratorio.
+
+El ejercicio afín permitirá probar candidatos manualmente y enviar una clave para calificarla. Ofrecerá una pista que revela el multiplicador y una acción explícita para revelar la solución; distinguirá entre `Sin resolver`, `Resuelto` y `Revelado`. Sus datos y candidatos permanecerán separados de los del emisor. Todo el progreso será en memoria y se descartará al recargar.
+
+Las reglas de edición, invalidación de resultados, instantáneas interceptables, ayuda y reinicio están en el [recorrido de aprendizaje y sesión](./docs/specs/learning-flow.md). Estos comportamientos están especificados, pero aún no implementados.
 
 ## Tecnologías y arquitectura
 
@@ -79,6 +87,8 @@ cryptolab/
 │       ├── math-foundations.md
 │       ├── cipher-caesar.md
 │       ├── cipher-affine.md
+│       ├── learning-flow.md
+│       ├── perspectives.md
 │       └── animation-system.md
 ├── crates/
 │   ├── crypto-core/
@@ -151,6 +161,8 @@ El alcance inicial excluye mundo abierto, multijugador, comunicación real entre
 - [Especificación de fundamentos matemáticos](./docs/specs/math-foundations.md).
 - [Especificación del cifrado César](./docs/specs/cipher-caesar.md).
 - [Especificación del cifrado afín](./docs/specs/cipher-affine.md).
+- [Recorrido de aprendizaje y sesión](./docs/specs/learning-flow.md).
+- [Perspectivas e información visible](./docs/specs/perspectives.md).
 - [Decisiones técnicas](./docs/DECISIONS.md) — pendiente de contenido.
 - [Sistema de animaciones](./docs/specs/animation-system.md) — pendiente de contenido.
 - [Instrucciones de desarrollo para agentes](./AGENTS.md).

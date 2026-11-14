@@ -129,4 +129,6 @@ Estas extensiones no forman parte del compromiso inicial y deberán especificars
 
 - [Arquitectura técnica](./ARCHITECTURE.md)
 - [Especificación del cifrado afín](./specs/cipher-affine.md)
+- [Recorrido de aprendizaje y sesión](./specs/learning-flow.md)
+- [Perspectivas e información visible](./specs/perspectives.md)
 - [Instrucciones para agentes](../AGENTS.md)

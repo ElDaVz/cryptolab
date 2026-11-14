@@ -179,6 +179,8 @@ Mostrará las operaciones matemáticas autorizadas para el modo educativo.
 
 **Limitación de seguridad:** al ejecutarse completamente en el navegador, CriptoLab no puede garantizar confidencialidad frente a un usuario que inspeccione su propio entorno de ejecución. La separación de perspectivas es una característica de la simulación educativa.
 
+Los modelos de información permitida, los contextos de las trazas y el acceso explícito a la solución del ejercicio se detallan en [Perspectivas](./specs/perspectives.md). El [recorrido de aprendizaje y sesión](./specs/learning-flow.md) define los borradores, la instantánea del último cifrado válido, la separación del ejercicio y las reglas de invalidación. Estas especificaciones concretan el trabajo de `experience` sin trasladar lógica de interfaz al núcleo Rust.
+
 ## 8. Estructura propuesta
 
 ```text
@@ -251,4 +253,6 @@ Cada decisión relevante deberá documentarse antes de consolidarse en la implem
 
 - [Visión del proyecto](./VISION.md)
 - [Especificación del cifrado afín](./specs/cipher-affine.md)
+- [Recorrido de aprendizaje y sesión](./specs/learning-flow.md)
+- [Perspectivas e información visible](./specs/perspectives.md)
 - [Instrucciones para agentes](../AGENTS.md)

@@ -198,6 +198,8 @@ No recibirá directamente la clave original mediante el contrato de esta perspec
 
 Podrá representar la secuencia de operaciones matemáticas para explicar el algoritmo.
 
+Los contratos detallados se definen en [Perspectivas](./perspectives.md). Durante un ejercicio sin resolver, la vista interna procedente del interceptor utiliza la clave candidata y su cálculo, no los datos originales. La pista, los envíos y el acceso posterior a la solución se rigen por el [recorrido de aprendizaje y sesión](./learning-flow.md). Son responsabilidades de la experiencia, sin modificar el contrato matemático de este núcleo.
+
 ## 8. Pruebas requeridas
 
 - Cifrado con vectores conocidos.
@@ -236,4 +238,6 @@ La funcionalidad estará completa cuando se satisfagan todos los criterios de ac
 
 - [Visión del proyecto](../VISION.md)
 - [Arquitectura técnica](../ARCHITECTURE.md)
+- [Recorrido de aprendizaje y sesión](./learning-flow.md)
+- [Perspectivas e información visible](./perspectives.md)
 - [Instrucciones para agentes](../../AGENTS.md)

@@ -15,7 +15,7 @@ D(y) = (y - 8) mod 26
 
 El resultado contiene operación (`Encrypt`/`Decrypt`), salida y pasos ordenados por carácter. Cada paso contiene índice de byte, carácter/valor de entrada y salida, y una operación aritmética tipada con los operandos, módulo, valor entero antes del módulo y residuo. En descifrado el operando de desplazamiento es -8. No se calcula ninguna transformación en TypeScript ni en animaciones.
 
-Las estructuras comunes se comparten con el [cifrado afín](./cipher-affine.md). No se fija todavía un contrato de serialización ni de perspectivas. Estas trazas son datos internos educativos y no constituyen una proyección para el interceptor.
+Las estructuras comunes se comparten con el [cifrado afín](./cipher-affine.md). No se fija todavía un contrato de serialización. Estas trazas son datos internos educativos y no constituyen una proyección para el interceptor; el filtrado y los contextos autorizados se definen en [Perspectivas](./perspectives.md).
 
 ## Criterios de aceptación
 
@@ -27,10 +27,12 @@ Las estructuras comunes se comparten con el [cifrado afín](./cipher-affine.md).
 
 ## Límites
 
-César es vulnerable al criptoanálisis y no proporciona seguridad moderna. Esta implementación es exclusivamente educativa. WASM, interfaz, animaciones y contratos detallados de perspectivas quedan fuera de este incremento.
+César es vulnerable al criptoanálisis y no proporciona seguridad moderna. Esta implementación es exclusivamente educativa. El desplazamiento +8 es público: el [recorrido de aprendizaje](./learning-flow.md) lo utiliza para enseñar sustitución y reducción modular, sin pedir recuperar una clave secreta. WASM, interfaz, animaciones e implementación de perspectivas quedan fuera del incremento del núcleo Rust.
 
 ## Documentos relacionados
 
 - [Visión](../VISION.md)
 - [Arquitectura](../ARCHITECTURE.md)
 - [Fundamentos matemáticos](./math-foundations.md)
+- [Recorrido de aprendizaje y sesión](./learning-flow.md)
+- [Perspectivas e información visible](./perspectives.md)

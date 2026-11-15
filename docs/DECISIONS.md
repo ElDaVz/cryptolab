@@ -2,7 +2,7 @@
 
 ## ADR-001 — Frontera WASM de la primera demo
 
-**Estado:** acordada para implementación futura; adaptador y build todavía pendientes.
+**Estado:** implementada y verificada en la primera demo.
 
 ### Contexto
 
@@ -19,4 +19,27 @@ La primera demo debe consumir los resultados y trazas del núcleo desde TypeScri
 
 Los DTO añaden una conversión explícita y pruebas de contrato, pero mantienen el dominio sin dependencias de transporte. Los números corrientes simplifican formularios y explicaciones; no autorizan convertir futuros enteros grandes con pérdida de precisión. La ejecución síncrona es adecuada para las consultas de 26 letras y mensajes de hasta 256 caracteres de la UI; aumentar el trabajo interactivo requiere reevaluar esa elección. Los binarios generados no se versionan: el build debe regenerarlos con herramientas y lockfiles fijados.
 
-La escena procedural, la interacción y sus límites de producto se detallan en [Máquina](./specs/machine-interaction.md), [Escritorio](./specs/desktop-experience.md) y [Animaciones](./specs/animation-system.md). Esta decisión no implica que esas funcionalidades ya estén implementadas.
+La escena procedural, la interacción y sus límites de producto se detallan en [Máquina](./specs/machine-interaction.md), [Escritorio](./specs/desktop-experience.md) y [Animaciones](./specs/animation-system.md). Su verificación ejecutada está documentada en el [registro de implementación](./IMPLEMENTATION.md).
+
+## ADR-002 — Herramientas aisladas y builds sin instalaciones implícitas
+
+**Estado:** implementada.
+
+### Decisión
+
+Fijar Rust 1.100.0 y targets nativo/WASM coincidentes bajo `.tools/rustup/` y
+`.tools/cargo/`. El wrapper `scripts/dev` aplica rutas y variables únicamente al
+proceso hijo; comprueba Node 26.13.0/npm 12.2.2. Setup explícito usa los lockfiles,
+instala wasm-pack 0.13.1 y wasm-bindgen 0.2.105 y prepara el Chromium de Playwright.
+Los builds ordinarios usan Cargo offline y wasm-pack `--mode no-install --no-opt`.
+No se requiere Binaryen ni se descarga una herramienta al desarrollar.
+
+### Consecuencias
+
+El setup de binarios está limitado inicialmente a Linux x86_64 y requiere red;
+las instalaciones del sistema permanecen intactas. Desactivar wasm-opt evita una
+dependencia auxiliar y su instalación implícita, a cambio de no aplicar esa
+optimización adicional; Cargo release sigue optimizando el módulo. El runtime
+continúa siendo estático, sin backend. Se usa Chromium headless para las pruebas,
+sin screenshots, vídeo ni trazas. El renderizado se verifica mediante consultas
+WebGL y contadores del renderer; no sustituye una revisión artística/audible.

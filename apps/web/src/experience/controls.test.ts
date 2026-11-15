@@ -1,3 +1,22 @@
-import{it,expect}from'vitest';
-import{Session}from'./session';import{api}from'../test-api';
-it('MI-03/04 empty controls start at zero, wrap canonically and preserve other supplied field',()=>{const s=new Session(api);s.closeIntro();s.editSender({algorithm:'affine',a:'31',b:'34'});expect(s.machine().positions).toEqual({a:5,b:8});s.stepKey('a',1);expect(s.sender().draft).toMatchObject({a:'6',b:'34'});s.editSender({a:'25'});s.stepKey('a',1);expect(s.sender().draft.a).toBe('0');s.stepKey('a',-1);expect(s.sender().draft.a).toBe('25');s.navigate('interceptor');s.setSource('exercise');s.stepKey('a',-1);expect(s.interceptor().key).toEqual({a:'0',b:''});expect(s.machine().positions).toEqual({a:0,b:null});expect(s.machine().mapping).toBeNull();});
+import { it, expect } from 'vitest';
+import { Session } from './session';
+import { api } from '../test-api';
+it('MI-03/04 empty controls start at zero, wrap canonically and preserve other supplied field', () => {
+  const s = new Session(api);
+  s.closeIntro();
+  s.editSender({ algorithm: 'affine', a: '31', b: '34' });
+  expect(s.machine().positions).toEqual({ a: 5, b: 8 });
+  s.stepKey('a', 1);
+  expect(s.sender().draft).toMatchObject({ a: '6', b: '34' });
+  s.editSender({ a: '25' });
+  s.stepKey('a', 1);
+  expect(s.sender().draft.a).toBe('0');
+  s.stepKey('a', -1);
+  expect(s.sender().draft.a).toBe('25');
+  s.navigate('interceptor');
+  s.setSource('exercise');
+  s.stepKey('a', -1);
+  expect(s.interceptor().key).toEqual({ a: '0', b: '' });
+  expect(s.machine().positions).toEqual({ a: 0, b: null });
+  expect(s.machine().mapping).toBeNull();
+});

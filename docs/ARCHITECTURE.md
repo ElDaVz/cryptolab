@@ -1,5 +1,8 @@
 # CriptoLab — Arquitectura de software
 
+La primera demo ya implementa estas capas. Véanse [ejecución](../README.md) y
+[verificación](./IMPLEMENTATION.md) para versiones, comandos y límites comprobados.
+
 ## 1. Resumen
 
 CriptoLab utilizará una arquitectura modular con separación entre lógica criptográfica, integración WebAssembly, gestión de la experiencia y representación visual.

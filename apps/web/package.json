@@ -19,7 +19,9 @@
     "wasm:release": "node ../../scripts/wasm.mjs release",
     "test:wasm": "node ../../scripts/check-wasm.mjs",
     "prebuild": "node ../../scripts/wasm.mjs release",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "format": "prettier --write src e2e '*.ts' '../../scripts/*.mjs'",
+    "format:check": "prettier --check src e2e '*.ts' '../../scripts/*.mjs'"
   },
   "dependencies": {
     "gsap": "3.15.1",
@@ -29,6 +31,7 @@
     "@playwright/test": "1.65.1",
     "@types/node": "26.6.6",
     "@types/three": "0.187.0",
+    "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.3.8",
     "vitest": "5.1.0"

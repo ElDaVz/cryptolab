@@ -2,13 +2,102 @@ import { describe, expect, it } from 'vitest';
 import { Session } from './session';
 import { api } from '../test-api';
 
-function sender(s:Session,message='ABC') { s.editSender({message,algorithm:'affine',a:'5',b:'8'}); s.executeSender(); }
-function candidate(s:Session,a='7',b='3') { s.editCandidate({a,b}); s.tryCandidate(); }
+function sender(s: Session, message = 'ABC') {
+  s.editSender({ message, algorithm: 'affine', a: '5', b: '8' });
+  s.executeSender();
+}
+function candidate(s: Session, a = '7', b = '3') {
+  s.editCandidate({ a, b });
+  s.tryCandidate();
+}
 
-describe('PE · projections and internal context authorization',()=>{
- it('PE-02/03/11 allowlists interceptor fields; model is detached and data only',()=>{const s=new Session(api);s.closeIntro();sender(s,'SECRETO');s.navigate('interceptor');const model=s.interceptor();expect(Object.keys(model).sort()).toEqual(['algorithm','canSubmit','candidate','ciphertext','error','feedback','hint','key','source','status'].sort());expect(JSON.stringify(model)).not.toContain('SECRETO');expect(model.key).toEqual({a:'',b:''});model.key.a='99';expect(s.interceptor().key.a).toBe('');s.setSource('exercise');expect(JSON.stringify(s.interceptor())).not.toContain('LACLAVEESTAENLOSDISCOS');expect(s.solution()).toBeNull();s.openSolution();expect(s.internal().result).toBeNull();});
- it('PE-04/05 candidate interior has only the chosen calculation',()=>{const s=new Session(api);s.closeIntro();s.navigate('interceptor');s.setSource('exercise');candidate(s,'7','4');s.openInternal();expect(s.internal().label).toBe('Intento candidato · Ejercicio preparado');expect(s.internal().result?.value).toMatchObject({suppliedKey:{a:7,b:4},cipher:{output:'WLNWLGPPDELPYWZDOTDNZD'}});expect(JSON.stringify(s.internal())).not.toContain('LACLAVEESTAENLOSDISCOS');});
- it('PE-07/08 invalidation retires context without substituting private result',()=>{const s=new Session(api);s.closeIntro();sender(s,'SECRETO');s.navigate('interceptor');s.setSource('exercise');candidate(s);s.openInternal();s.editCandidate({b:'4'});expect(s.internal().result).toBeNull();s.reveal();s.openSolution();expect(s.internal().label).toContain('Solución original');s.resetExercise();expect(s.internal().result).toBeNull();});
- it('PE-10 Caesar exposes known shift and candidate trace -8',()=>{const s=new Session(api);s.closeIntro();s.editSender({message:'XYZ'});s.executeSender();s.navigate('interceptor');s.tryCandidate();expect(s.interceptor().candidate).toBe('XYZ');s.openInternal();expect(s.internal().result?.value.cipher.steps[0].arithmetic).toMatchObject({kind:'shift',shift:-8});});
- it('MI-01/04/05 preview is Rust-derived and does not execute message or fill secrets',()=>{const s=new Session(api);s.closeIntro();s.editSender({algorithm:'affine'});expect(s.machine().mapping).toBe('INSXCHMRWBGLQVAFKPUZEJOTYD');expect(s.interceptor().ciphertext).toBeNull();expect(s.sender().result).toBeNull();s.editSender({a:'2'});expect(s.machine().mapping).toBeNull();s.navigate('interceptor');s.setSource('exercise');expect(s.machine().positions).toEqual({a:null,b:null});expect(s.machine().mapping).toBeNull();});
+describe('PE · projections and internal context authorization', () => {
+  it('PE-02/03/11 allowlists interceptor fields; model is detached and data only', () => {
+    const s = new Session(api);
+    s.closeIntro();
+    sender(s, 'SECRETO');
+    s.navigate('interceptor');
+    const model = s.interceptor();
+    expect(Object.keys(model).sort()).toEqual(
+      [
+        'algorithm',
+        'canSubmit',
+        'candidate',
+        'ciphertext',
+        'error',
+        'feedback',
+        'hint',
+        'key',
+        'source',
+        'status',
+      ].sort(),
+    );
+    expect(JSON.stringify(model)).not.toContain('SECRETO');
+    expect(model.key).toEqual({ a: '', b: '' });
+    model.key.a = '99';
+    expect(s.interceptor().key.a).toBe('');
+    s.setSource('exercise');
+    expect(JSON.stringify(s.interceptor())).not.toContain('LACLAVEESTAENLOSDISCOS');
+    expect(s.solution()).toBeNull();
+    s.openSolution();
+    expect(s.internal().result).toBeNull();
+  });
+  it('PE-04/05 candidate interior has only the chosen calculation', () => {
+    const s = new Session(api);
+    s.closeIntro();
+    s.navigate('interceptor');
+    s.setSource('exercise');
+    candidate(s, '7', '4');
+    s.openInternal();
+    expect(s.internal().label).toBe('Intento candidato · Ejercicio preparado');
+    expect(s.internal().result?.value).toMatchObject({
+      suppliedKey: { a: 7, b: 4 },
+      cipher: { output: 'WLNWLGPPDELPYWZDOTDNZD' },
+    });
+    expect(JSON.stringify(s.internal())).not.toContain('LACLAVEESTAENLOSDISCOS');
+  });
+  it('PE-07/08 invalidation retires context without substituting private result', () => {
+    const s = new Session(api);
+    s.closeIntro();
+    sender(s, 'SECRETO');
+    s.navigate('interceptor');
+    s.setSource('exercise');
+    candidate(s);
+    s.openInternal();
+    s.editCandidate({ b: '4' });
+    expect(s.internal().result).toBeNull();
+    s.reveal();
+    s.openSolution();
+    expect(s.internal().label).toContain('Solución original');
+    s.resetExercise();
+    expect(s.internal().result).toBeNull();
+  });
+  it('PE-10 Caesar exposes known shift and candidate trace -8', () => {
+    const s = new Session(api);
+    s.closeIntro();
+    s.editSender({ message: 'XYZ' });
+    s.executeSender();
+    s.navigate('interceptor');
+    s.tryCandidate();
+    expect(s.interceptor().candidate).toBe('XYZ');
+    s.openInternal();
+    expect(s.internal().result?.value.cipher.steps[0].arithmetic).toMatchObject({
+      kind: 'shift',
+      shift: -8,
+    });
+  });
+  it('MI-01/04/05 preview is Rust-derived and does not execute message or fill secrets', () => {
+    const s = new Session(api);
+    s.closeIntro();
+    s.editSender({ algorithm: 'affine' });
+    expect(s.machine().mapping).toBe('INSXCHMRWBGLQVAFKPUZEJOTYD');
+    expect(s.interceptor().ciphertext).toBeNull();
+    expect(s.sender().result).toBeNull();
+    s.editSender({ a: '2' });
+    expect(s.machine().mapping).toBeNull();
+    s.navigate('interceptor');
+    s.setSource('exercise');
+    expect(s.machine().positions).toEqual({ a: null, b: null });
+    expect(s.machine().mapping).toBeNull();
+  });
 });

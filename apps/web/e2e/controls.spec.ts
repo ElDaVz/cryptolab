@@ -1,8 +1,28 @@
-import{test,expect}from'@playwright/test';
-test('MI-03/04/07 pointer capture and keyboard equivalents',async({page})=>{
- await page.goto('./');await page.getByRole('button',{name:'Omitir introducción'}).click();await expect(page.getByText('Motor matemático listo')).toBeVisible();await page.getByLabel('Algoritmo').selectOption('affine');await page.getByLabel('a · Factor').fill('31');
- const canvas=page.locator('#machine canvas');await page.waitForTimeout(650);const bounds=(await canvas.boundingBox())!;const [x,y]=(await canvas.getAttribute('data-knob-a'))!.split(',').map(Number);
- await page.mouse.move(bounds.x+x,bounds.y+y);await page.mouse.down();await page.mouse.move(bounds.x+x+24,bounds.y+y);await page.mouse.up();await expect(page.getByLabel('a · Factor')).toHaveValue('7');await expect(page.getByLabel('b · Desplazamiento')).toHaveValue('8');
- await page.getByLabel('a · Factor').fill('25');await page.getByLabel('a · Factor').press('ArrowUp');await expect(page.getByLabel('a · Factor')).toHaveValue('0');await page.getByRole('button',{name:'Disminuir a'}).click();await expect(page.getByLabel('a · Factor')).toHaveValue('25');
- await page.getByRole('button',{name:'Interceptor',exact:true}).click();await page.getByLabel('Fuente').selectOption('exercise');await page.getByRole('button',{name:'Aumentar a'}).click();await expect(page.getByLabel('a · Factor')).toHaveValue('0');await expect(page.getByTestId('mapping')).toHaveText('Configura una clave válida');
+import { test, expect } from '@playwright/test';
+test('MI-03/04/07 pointer capture and keyboard equivalents', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: 'Omitir introducción' }).click();
+  await expect(page.getByText('Motor matemático listo')).toBeVisible();
+  await page.getByLabel('Algoritmo').selectOption('affine');
+  await page.getByLabel('a · Factor').fill('31');
+  const canvas = page.locator('#machine canvas');
+  await page.waitForTimeout(650);
+  const bounds = (await canvas.boundingBox())!;
+  const [x, y] = (await canvas.getAttribute('data-knob-a'))!.split(',').map(Number);
+  await page.mouse.move(bounds.x + x, bounds.y + y);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + x + 24, bounds.y + y);
+  await page.mouse.up();
+  await expect(page.getByLabel('a · Factor')).toHaveValue('7');
+  await expect(page.getByLabel('b · Desplazamiento')).toHaveValue('8');
+  await page.getByLabel('a · Factor').fill('25');
+  await page.getByLabel('a · Factor').press('ArrowUp');
+  await expect(page.getByLabel('a · Factor')).toHaveValue('0');
+  await page.getByRole('button', { name: 'Disminuir a' }).click();
+  await expect(page.getByLabel('a · Factor')).toHaveValue('25');
+  await page.getByRole('button', { name: 'Interceptor', exact: true }).click();
+  await page.getByLabel('Fuente').selectOption('exercise');
+  await page.getByRole('button', { name: 'Aumentar a' }).click();
+  await expect(page.getByLabel('a · Factor')).toHaveValue('0');
+  await expect(page.getByTestId('mapping')).toHaveText('Configura una clave válida');
 });

@@ -3,5 +3,6 @@
   "node": "v26.13.0",
   "npm": "12.2.2",
   "wasmPack": "0.13.1",
-  "wasmBindgen": "0.2.105"
+  "wasmBindgen": "0.2.105",
+  "chromium": "159.0.8154.6"
 }

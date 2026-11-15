@@ -9,15 +9,18 @@ test('supported hosts choose native Rust and release artifact targets', () => {
   for (const [platform, arch, host, artifact] of [
     ['linux', 'x64', 'x86_64-unknown-linux-gnu', 'x86_64-unknown-linux-musl'],
     ['win32', 'x64', 'x86_64-pc-windows-msvc', 'x86_64-pc-windows-msvc'],
-    ['darwin', 'x64', 'x86_64-apple-darwin', 'x86_64-apple-darwin'],
-    ['darwin', 'arm64', 'aarch64-apple-darwin', 'aarch64-apple-darwin'],
   ]) {
     const config = platformConfig(platform, arch);
     assert.equal(config.host, host);
     assert.equal(config.artifact, artifact);
     assert.equal(config.suffix, platform === 'win32' ? '.exe' : '');
   }
-  assert.throws(() => platformConfig('linux', 'arm64'), /Unsupported host/);
+  for (const [platform, arch] of [
+    ['linux', 'arm64'],
+    ['darwin', 'x64'],
+    ['darwin', 'arm64'],
+  ])
+    assert.throws(() => platformConfig(platform, arch), /Unsupported host/);
 });
 
 test('Windows environment deduplicates Path and confines tool paths to child', () => {

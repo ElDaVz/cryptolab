@@ -22,10 +22,9 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
    | --- | --- |
    | Linux x86_64 | `curl`, `tar`, compilador/enlazador C (`cc`) y bibliotecas compatibles con Chromium |
    | Windows x64 nativo | PowerShell, `curl.exe`, `tar.exe`, Visual Studio Build Tools con «Desktop development with C++» y Windows SDK; abrir Developer PowerShell x64 |
-   | macOS Intel o Apple Silicon | `curl`, `tar` y Xcode Command Line Tools (`xcode-select --install`) |
 
-   La validación local realizada es Linux. Windows y ambos macOS están configurados
-   en CI; requieren resultados correctos allí antes de considerarlos verificados.
+   El entorno de desarrollo soportado se limita a **Ubuntu/Linux x86_64 y Windows
+   x64 nativo**. El usuario confirmó checks CI correctos en Ubuntu y Windows.
 3. Clonar **la rama que contiene esta demo**, mientras no se haya integrado a `main`:
 
    ```sh
@@ -46,8 +45,7 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
    ni cambios globales. Repara una instalación local incorrecta o rota. Luego instala
    Rust **1.100.0**, targets nativo/WASM, rustfmt/Clippy, wasm-pack **0.13.1**,
    wasm-bindgen **0.2.105**, dependencias del lockfile y Chromium **159.0.8154.6**
-   de Playwright **1.65.1**. En Apple Silicon compila wasm-pack nativamente durante
-   setup, porque esa versión no publica binario macOS ARM; puede tardar más.
+   de Playwright **1.65.1**.
    Setup termina solo después de pruebas nativas, módulo WASM mínimo, build frontend
    y comprobación de dibujo WebGL en Chromium.
 5. Comprobar el entorno sin instalar herramientas:

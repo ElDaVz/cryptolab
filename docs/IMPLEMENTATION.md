@@ -248,3 +248,75 @@ subir sus commits locales al único PR de esa rama, esperar las comprobaciones y
 fusionarlo en `main`. La implementación de la nueva máquina se hará después en
 una rama nueva creada desde ese `main` actualizado, con tareas y commits pequeños.
 La recomendación no significa que se haya publicado o fusionado ningún cambio.
+
+## Corrección CI — npm local fijado
+
+El primer CI falló antes de las pruebas de aplicación: se exigía npm 12.2.2,
+pero Node 26.13.0 incluye npm 11.20.0. Seleccionar Node mediante setup-node no
+provisionaba el npm esperado. No se modifica ninguno de los pins para corregirlo.
+
+Según ADR-004, setup verifica Node e instala o repara npm 12.2.2 bajo `.tools/npm/`
+usando el npm del host exclusivamente para ese arranque. Comprueba la copia temporal
+antes de reemplazar una instalación anterior. El wrapper y sus procesos hijos usan
+la copia local, incluidos los scripts npm anidados y el preview de Playwright.
+No se modifica npm global y no hay fallback al npm del host en comandos ordinarios.
+
+CI lee Node desde `scripts/versions.json`. Se añaden comprobaciones de coherencia
+entre pins, manifiestos, lockfiles, wasm-bindgen y versiones instaladas, incluyendo
+el Chromium que declara Playwright. `npm ci --engine-strict` comprueba los requisitos
+de los paquetes instalados. Doctor informa rutas y versiones sin instalar.
+La revisión detectó además que las nuevas comparaciones de Cargo debían aceptar
+CRLF en Windows; se normalizan los finales de línea y se cubren por regresión.
+Además, `.gitattributes` conserva LF en los checkouts de texto para evitar fallos
+de formato y del wrapper Unix al clonar con `core.autocrlf=true`.
+
+### Commits de corrección
+
+| Commit | Cambio |
+| --- | --- |
+| `b216aaa` | npm local explícito, reparación y regresiones; coherencia de versiones. |
+| `6c9b7f0` | Selección de Node en CI desde los pins validados. |
+| `d2a5c4c` | Compatibilidad CRLF de las comprobaciones Cargo. |
+| `6a64286` | LF consistente en checkouts de texto, incluso con autocrlf. |
+| Commit que contiene este registro | Onboarding, ADR-004 y evidencia de verificación. |
+
+### Verificación ejecutada de la corrección
+
+En Linux x86_64, con Node 26.13.0 y npm local 12.2.2:
+
+- Setup completo correcto: preparación explícita, `npm ci --engine-strict`,
+  15 pruebas Rust debug y un doctest, módulo WASM mínimo, build y renderizado WebGL.
+- Rust release: 15 pruebas y un doctest correctos; formato y Clippy correctos.
+- Diez pruebas de tooling correctas: arranque desde npm 11.20.0, repetición,
+  reparación, preservación ante una instalación fallida, PATH, argumentos y rutas
+  con espacios, npm anidado, coherencia de versiones y lectura Cargo con CRLF.
+- TypeScript, Prettier y Vitest correctos; 24 pruebas frontend.
+- Módulo WASM real correcto, incluidos 312 round trips y validación estricta.
+- Chromium: 17 pruebas correctas en la base predeterminada y otras 17 en
+  `/cryptolab/`. Se restauró el build predeterminado. Sin capturas ni tracing.
+- Doctor correcto. Las huellas de nombres, tamaños y fechas de los archivos bajo
+  npm local, binarios, toolchains y navegadores permanecieron iguales antes/después;
+  la versión y el hash del CLI npm del host tampoco cambiaron.
+- Checkouts temporales con `core.autocrlf=true`: antes de `.gitattributes`, scripts,
+  TypeScript y Cargo.lock se convertían a CRLF; después conservan LF.
+- El paso de metadatos CI emitió `node=v26.13.0` usando los pins del repositorio.
+- Checkout limpio en una ruta temporal con espacios, sin herramientas ni cachés
+  del proyecto: fixture con Node 26.13.0 y npm **real 11.20.0**. Doctor inicial
+  falló sin crear `.tools/`. Dos ejecuciones completas de setup pasaron: instalaron
+  npm local 12.2.2, Rust y ambos targets, herramientas WASM, frontend y Chromium;
+  comprobaron pruebas nativas, WASM mínimo, build y muestras WebGL. Después pasaron
+  doctor y las diez pruebas de tooling. El CLI npm 11.20.0 conservó su hash y versión,
+  y `git status --porcelain` del checkout terminó vacío.
+- Revisión de enlaces, `git diff --check` y exclusión de artefactos: correctas.
+
+No se encontraron más discrepancias de versiones en la verificación local.
+La descarga inicial de npm dentro del sandbox falló por DNS; se repitió con acceso
+aprobado. El setup limpio posterior completó sus descargas y verificaciones.
+Persisten las advertencias informativas de bundle grande, fallback Ubuntu 24.04
+de Playwright en este host y disponibilidad de un wasm-pack más nuevo; se mantienen
+las versiones fijadas que se han probado.
+
+Los cambios están en commits locales de `feat/first-desktop-demo`, sin push ni merge.
+La nueva ejecución remota de los cuatro jobs sigue pendiente: los resultados Linux
+no certifican Windows, macOS Intel ni Apple Silicon, incluida la compilación nativa
+de wasm-pack en este último. Las capturas y el tracing permanecen desactivados.

@@ -71,3 +71,41 @@ PR es Markdown; GitHub Actions comprueba los cambios y no crea ni integra PRs.
 
 Referencias: [runners oficiales de GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 y [assets de wasm-pack 0.13.1](https://github.com/wasm-bindgen/wasm-pack/releases/expanded_assets/v0.13.1).
+
+## ADR-004 — npm local explícito y coherencia de versiones en CI
+
+**Estado:** implementada; ejecución remota de los cuatro hosts pendiente.
+
+### Contexto y decisión
+
+El primer CI se detuvo al exigir npm 12.2.2 antes de instalarlo: Node 26.13.0
+incluye npm 11.20.0. Mantener ambos pins requiere provisionar npm por separado.
+Setup valida Node, utiliza el npm del host para instalar npm 12.2.2 sin scripts
+bajo una carpeta temporal de `.tools/`, comprueba su versión y lo coloca en
+`.tools/npm/`. Las repeticiones conservan una copia correcta o reparan una rota;
+un fallo de instalación no reemplaza la anterior. No se cambia npm global.
+
+Los comandos ordinarios invocan el CLI npm local mediante Node y nunca recurren
+al npm del host. Su directorio de ejecutables encabeza el PATH de los hijos para
+conservar la versión en scripts anidados, incluido Playwright preview. Doctor
+solo diagnostica. La preparación requiere Node fijado y un npm del host funcional;
+no exige que ese npm tenga ya la versión del proyecto.
+
+CI obtiene Node de `scripts/versions.json`. Setup valida pins contra manifiestos,
+lockfiles y wasm-bindgen antes de descargar; después de `npm ci --engine-strict`
+valida también versiones instaladas y el Chromium declarado por Playwright.
+Doctor repite esas comprobaciones sin instalar. `.gitattributes` mantiene LF en
+checkouts de texto para que el formato sea estable entre sistemas; el lector de
+contratos Cargo tolera también CRLF. Esta decisión amplía ADR-002/003
+para corregir el requisito inicial de proporcionar npm exacto manualmente.
+
+### Consecuencias
+
+El primer setup requiere una descarga adicional pequeña y espacio para una copia
+local de npm. Las versiones siguen siendo estrictas y los builds no descargan
+herramientas. Las discrepancias se detectan explícitamente; no se rebajan pins ni
+se ocultan checks fallidos. La validación de metadatos no sustituye la ejecución
+real de compilación, pruebas y navegador en cada sistema.
+
+Referencias: [npm incluido en Node 26.13.0](https://raw.githubusercontent.com/nodejs/node/v26.13.0/deps/npm/package.json)
+y [requisitos de npm 12.2.2](https://raw.githubusercontent.com/npm/cli/v12.2.2/package.json).

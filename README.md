@@ -13,8 +13,9 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
 
 ## Preparación y ejecución
 
-1. Instalar Git y **Node 26.13.0 con npm 12.2.2**. Comprobar `node --version`
-   y `npm --version`. Las versiones son exactas; el wrapper informa cualquier diferencia.
+1. Instalar Git y **Node 26.13.0 con su npm incluido**. Comprobar `node --version`.
+   Setup instalará **npm 12.2.2** dentro de `.tools/npm/`; no hace falta cambiar
+   el npm global. Node 26.13.0 incluye npm 11.20.0, válido para este arranque.
 2. Preparar el compilador y las utilidades nativas del host:
 
    | Plataforma prevista | Requisitos previos |
@@ -40,7 +41,9 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
    node scripts/dev.mjs setup
    ```
 
-   Necesita red hacia Rust, GitHub, npm y Playwright. Es seguro repetirlo. Instala
+   Necesita red hacia Rust, GitHub, npm y Playwright. Es seguro repetirlo. Usa
+   el npm del host solo para preparar npm **12.2.2** local, sin scripts de instalación
+   ni cambios globales. Repara una instalación local incorrecta o rota. Luego instala
    Rust **1.100.0**, targets nativo/WASM, rustfmt/Clippy, wasm-pack **0.13.1**,
    wasm-bindgen **0.2.105**, dependencias del lockfile y Chromium **159.0.8154.6**
    de Playwright **1.65.1**. En Apple Silicon compila wasm-pack nativamente durante
@@ -53,8 +56,9 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
    node scripts/dev.mjs doctor
    ```
 
-   Deben aparecer correctos Node/npm, Rust, target WASM, wasm-pack, wasm-bindgen
-   y Chromium/WebGL. Si falla, resolver el diagnóstico antes de continuar.
+   Deben aparecer correctos los contratos de versiones/dependencias, Node, npm
+   local, Rust, target WASM, wasm-pack, wasm-bindgen y Chromium/WebGL. Si falla,
+   resolver el diagnóstico antes de continuar.
 6. Iniciar la demo:
 
    ```sh
@@ -71,13 +75,21 @@ En Unix también existe el alias `./scripts/dev …`. El wrapper aplica el entor
 solo a sus procesos hijos: no cambia perfiles, PATH global ni instalaciones del sistema.
 Herramientas en `.tools/`, dependencias y builds permanecen ignorados por Git.
 Las versiones están en [scripts/versions.json](./scripts/versions.json), manifiestos y lockfiles.
+CI lee la versión Node desde ese mismo archivo. Setup comprueba su coherencia y
+usa `npm ci --engine-strict`. El wrapper invoca el CLI npm local con Node; añade
+sus ejecutables al PATH hijo para que los scripts npm anidados y el preview de
+Playwright usen también npm 12.2.2. Los comandos ordinarios no recurren al npm del host.
 Los builds ordinarios usan Cargo offline y wasm-pack `--mode no-install --no-opt
 --locked --offline`; si falta una dependencia, ejecutar setup explícitamente.
 
 ### Resolver problemas de preparación
 
-- **Versión de Node/npm incorrecta:** activar las versiones indicadas antes de setup;
-  el proyecto no modifica sus instalaciones globales.
+- **Node incorrecto:** activar Node 26.13.0 antes de setup.
+- **npm local ausente, incorrecto o roto:** ejecutar `node scripts/dev.mjs setup`.
+  `doctor` muestra la ruta y versión local; no instala ni repara herramientas.
+  No intentar resolverlo actualizando npm global: el proyecto usa su propia copia.
+- **Declaraciones de versiones incompatibles:** revisar los pins, manifiestos y
+  lockfiles indicados por el diagnóstico; no rebajar versiones para ocultar el fallo.
 - **Compilador o enlazador ausente:** instalar los requisitos de la tabla. En Windows,
   comprobar que la terminal tenga el entorno de Visual Studio x64. `doctor` enlaza
   los ejecutables de pruebas nativas sin ejecutarlos.

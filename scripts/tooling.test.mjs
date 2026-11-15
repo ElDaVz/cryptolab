@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, realpathSync } from 'node:fs';
+import { mkdtempSync, rmSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { platformConfig, projectEnvironment, execute, npmCli } from './tooling.mjs';
+import { platformConfig, projectEnvironment, execute, npmCli, versions } from './tooling.mjs';
 
 test('supported hosts choose native Rust and release artifact targets', () => {
   for (const [platform, arch, host, artifact] of [
@@ -25,7 +25,7 @@ test('Windows environment deduplicates Path and confines tool paths to child', (
   const env = projectEnvironment(base, 'C:\\project with spaces', platformConfig('win32', 'x64'));
   assert.equal(
     env.PATH,
-    'C:\\project with spaces\\.tools\\bin;C:\\project with spaces\\.tools\\cargo\\bin;C:\\Windows',
+    'C:\\project with spaces\\.tools\\npm\\node_modules\\.bin;C:\\project with spaces\\.tools\\bin;C:\\project with spaces\\.tools\\cargo\\bin;C:\\Windows',
   );
   assert.equal(env.Path, undefined);
   assert.equal(env.CARGO_NET_OFFLINE, 'true');
@@ -69,6 +69,25 @@ test('process arguments and working directories preserve spaces and shell metach
     const npm = execute('npm', ['--version'], { stdio: 'pipe', encoding: 'utf8' });
     assert.equal(npm.status, 0, npm.error?.message);
     assert.match(npm.stdout, /^\d+\.\d+\.\d+/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
+test('nested npm scripts use the project version through the child PATH', () => {
+  const cwd = mkdtempSync(path.join(tmpdir(), 'cryptolab nested npm '));
+  try {
+    writeFileSync(
+      path.join(cwd, 'package.json'),
+      JSON.stringify({ scripts: { probe: 'npm --version' } }),
+    );
+    const result = execute('npm', ['run', 'probe', '--silent'], {
+      cwd,
+      stdio: 'pipe',
+      encoding: 'utf8',
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), versions.npm);
   } finally {
     rmSync(cwd, { recursive: true, force: true });
   }

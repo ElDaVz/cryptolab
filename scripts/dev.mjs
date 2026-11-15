@@ -1,14 +1,26 @@
 import { existsSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
 import path from 'node:path';
-import { root, versions as v, env, config, toolchain, scoped, run, output } from './tooling.mjs';
+import { ensureProjectNpm } from './npm-setup.mjs';
+import { checkVersionPins } from './version-check.mjs';
+import {
+  root,
+  versions as v,
+  env,
+  config,
+  toolchain,
+  scoped,
+  run,
+  output,
+  npmCli,
+} from './tooling.mjs';
 function checkNode() {
-  for (const [cmd, want] of [
-    ['node', v.node],
-    ['npm', v.npm],
-  ]) {
-    const got = output(cmd, ['--version']);
-    if (got !== want) throw new Error(`${cmd}: expected ${want}, got ${got}`);
-  }
+  if (process.version !== v.node)
+    throw new Error(`node: expected ${v.node}, got ${process.version} (${process.execPath})`);
+}
+function checkNpm() {
+  const got = output('npm', ['--version']);
+  if (got !== v.npm)
+    throw new Error(`npm: expected ${v.npm}, got ${got}. Run node scripts/dev.mjs setup.`);
 }
 function download(url, dest) {
   run('curl', ['--fail', '--location', '--retry', '2', url, '-o', dest]);
@@ -20,7 +32,10 @@ function readyRust() {
 const [command, ...args] = process.argv.slice(2);
 try {
   if (command === 'setup') {
+    checkVersionPins();
     checkNode();
+    ensureProjectNpm();
+    checkNpm();
     mkdirSync(`${root}/.tools/bin`, { recursive: true });
     env.CARGO_NET_OFFLINE = 'false';
     if (!existsSync(scoped('rustup'))) {
@@ -86,7 +101,8 @@ try {
       cpSync(path.join(root, '.tools', folder, name + config.suffix), scoped(name));
     }
     run('cargo', ['fetch', '--locked']);
-    run('npm', ['--prefix', 'apps/web', 'ci']);
+    run('npm', ['--prefix', 'apps/web', 'ci', '--engine-strict']);
+    checkVersionPins({ installed: true });
     run('node', ['apps/web/node_modules/playwright/cli.js', 'install', 'chromium', '--only-shell']);
     run('cargo', ['test', '--workspace', '--locked']);
     writeFileSync(
@@ -109,13 +125,30 @@ try {
   } else if (command === 'doctor') {
     let failed = false;
     for (const [label, check] of [
-      ['Node/npm', checkNode],
+      [
+        'Version declarations and installed dependencies',
+        () => checkVersionPins({ installed: true }),
+      ],
+      [
+        'Node',
+        () => {
+          checkNode();
+          console.log(`${process.version} ${process.execPath}`);
+        },
+      ],
+      [
+        'npm',
+        () => {
+          checkNpm();
+          console.log(`${v.npm} ${npmCli()}`);
+        },
+      ],
       [
         'Rust',
         () => {
           readyRust();
           const got = output(path.join(toolchain, 'bin', `rustc${config.suffix}`), ['--version']);
-          console.log(got);
+          console.log(`${got} ${path.join(toolchain, 'bin', `rustc${config.suffix}`)}`);
           if (!got.startsWith(`rustc ${v.rust} `)) throw new Error('version mismatch');
           run('cargo', ['test', '--workspace', '--locked', '--no-run']);
         },
@@ -135,15 +168,17 @@ try {
       [
         'wasm-pack',
         () => {
-          if (output('wasm-pack', ['--version']) !== `wasm-pack ${v.wasmPack}`)
-            throw new Error('version mismatch');
+          const got = output('wasm-pack', ['--version']);
+          console.log(`${got} ${scoped('wasm-pack')}`);
+          if (got !== `wasm-pack ${v.wasmPack}`) throw new Error('version mismatch');
         },
       ],
       [
         'wasm-bindgen',
         () => {
-          if (output('wasm-bindgen', ['--version']) !== `wasm-bindgen ${v.wasmBindgen}`)
-            throw new Error('version mismatch');
+          const got = output('wasm-bindgen', ['--version']);
+          console.log(`${got} ${scoped('wasm-bindgen')}`);
+          if (got !== `wasm-bindgen ${v.wasmBindgen}`) throw new Error('version mismatch');
         },
       ],
       ['Chromium/WebGL', () => run(process.execPath, ['scripts/browser-doctor.mjs'])],
@@ -162,6 +197,7 @@ try {
     run('cargo', args);
   } else if (command === 'npm') {
     checkNode();
+    checkNpm();
     run('npm', args);
   } else throw new Error('Usage: node scripts/dev.mjs setup | doctor | cargo … | npm …');
 } catch (e) {

@@ -25,10 +25,11 @@ export function platformConfig(platform = process.platform, arch = process.arch)
 export const config = platformConfig();
 export function projectEnvironment(base = process.env, directory = root, host = config) {
   const paths = host.platform === 'win32' ? path.win32 : path.posix;
-  const inheritedPath =
-    Object.entries(base).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';
+  const isPath = (key) =>
+    host.platform === 'win32' ? key.toLowerCase() === 'path' : key === 'PATH';
+  const inheritedPath = Object.entries(base).find(([key]) => isPath(key))?.[1] ?? '';
   const result = { ...base };
-  for (const key of Object.keys(result)) if (key.toLowerCase() === 'path') delete result[key];
+  for (const key of Object.keys(result)) if (isPath(key)) delete result[key];
   return {
     ...result,
     RUSTUP_HOME: paths.join(directory, '.tools', 'rustup'),
@@ -63,7 +64,10 @@ export function scoped(command) {
 // which would otherwise reinterpret forwarded arguments and paths with spaces.
 export function npmCli(base = process.env, executable = process.execPath) {
   const candidates = [path.join(path.dirname(executable), 'node_modules/npm/bin/npm-cli.js')];
-  const searchPath = Object.entries(base).find(([key]) => key.toLowerCase() === 'path')?.[1] ?? '';
+  const searchPath =
+    Object.entries(base).find(([key]) =>
+      process.platform === 'win32' ? key.toLowerCase() === 'path' : key === 'PATH',
+    )?.[1] ?? '';
   for (const directory of searchPath.split(path.delimiter)) {
     const shim = path.join(directory, process.platform === 'win32' ? 'npm.cmd' : 'npm');
     if (existsSync(shim)) {

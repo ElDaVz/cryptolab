@@ -41,6 +41,7 @@ export function projectEnvironment(base = process.env, directory = root, host = 
     CARGO_TARGET_DIR: paths.join(directory, 'target'),
     WASM_PACK_CACHE: paths.join(directory, '.tools', 'wasm-pack-cache'),
     PATH: [
+      paths.join(directory, '.tools', 'npm', 'node_modules', '.bin'),
       paths.join(directory, '.tools', 'bin'),
       paths.join(directory, '.tools', 'cargo', 'bin'),
       inheritedPath,
@@ -62,7 +63,7 @@ export function scoped(command) {
 }
 // Invoke npm's JavaScript CLI directly: .cmd files need a shell on Windows,
 // which would otherwise reinterpret forwarded arguments and paths with spaces.
-export function npmCli(base = process.env, executable = process.execPath) {
+export function bootstrapNpmCli(base = process.env, executable = process.execPath) {
   const candidates = [path.join(path.dirname(executable), 'node_modules/npm/bin/npm-cli.js')];
   const searchPath =
     Object.entries(base).find(([key]) =>
@@ -82,6 +83,12 @@ export function npmCli(base = process.env, executable = process.execPath) {
     throw new Error(
       'npm CLI missing. Install the pinned Node/npm prerequisites described in README.md.',
     );
+  return cli;
+}
+// Regular commands never fall back to the host npm. Only explicit setup may use it.
+export function npmCli(directory = root) {
+  const cli = path.join(directory, '.tools', 'npm', 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (!existsSync(cli)) throw new Error('Project npm missing. Run node scripts/dev.mjs setup.');
   return cli;
 }
 export function execute(command, args = [], options = {}) {

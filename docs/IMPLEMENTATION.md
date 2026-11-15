@@ -112,3 +112,61 @@ Rama: `feat/first-desktop-demo`. Orden de implementación:
 | Commit final que contiene este registro | Verificación integral, revisión, formato y documentación de ejecución. |
 
 Para ver los doce hashes completos: `git log --reverse --oneline main..HEAD`.
+
+## Onboarding y contribuciones · 2026-11-14
+
+Este incremento amplía el setup Linux original según ADR-003. La entrada común
+es `node scripts/dev.mjs`; `scripts/dev` conserva su función de alias Unix.
+El README contiene el recorrido numerado desde clone hasta ejecución y pruebas,
+requisitos por plataforma y diagnóstico. AGENTS incorpora ramas por asignación,
+commits pequeños, ruta de lectura de especificaciones y entrega mediante draft PR,
+respetando instrucciones de trabajo local. La plantilla está en
+[.github/pull_request_template.md](../.github/pull_request_template.md) y la
+[matriz CI](../.github/workflows/ci.yml) cubre Linux x64, Windows x64 nativo,
+macOS Intel y Apple Silicon. No se modifica el dominio ni las especificaciones.
+
+### Evidencia ejecutada en este incremento
+
+En Linux x86_64 con las versiones exactas ya registradas:
+
+- `node scripts/dev.mjs setup`: repetición correcta, `npm ci`, Rust debug
+  (15 pruebas y un doctest), módulo WASM mínimo, build y Chromium/WebGL correctos.
+- `node scripts/dev.mjs doctor`: correcto; enlaza pruebas nativas sin ejecutarlas,
+  comprueba versiones y target y verifica muestras WebGL sin instalar herramientas.
+- `node scripts/dev.mjs cargo test --workspace --release --locked`: 15 pruebas
+  y un doctest correctos. Formato Rust y Clippy con `-D warnings`: correctos.
+- `node scripts/dev.mjs npm --prefix apps/web run test:tooling`: cuatro pruebas
+  correctas; tripletas, sufijos, reglas PATH, aislamiento, argumentos literales y
+  directorio con espacios. Las rutas temporales se comparan canónicamente para macOS.
+- `typecheck`, `format:check` y `test` mediante el mismo wrapper npm: correctos;
+  Vitest conserva 24 pruebas correctas.
+- `test:wasm`: contratos del módulo real y 312 round trips correctos.
+- `test:e2e`: 17 pruebas correctas con build release/base predeterminada.
+- Build `--base=/cryptolab/` y `test:browser` con las variables documentadas:
+  17 pruebas correctas. Se restauró después el build con base predeterminada.
+- Enlaces Markdown relativos revisados; revisión de diff y exclusión de artefactos
+  correctas. El YAML del workflow se revisó manualmente; no había un parser YAML
+  instalado localmente. La ejecución remota de GitHub Actions sigue pendiente.
+
+La primera ejecución E2E encontró 4173 ocupado por el preview de esta misma demo;
+se detuvo ese preview y se repitió correctamente. No se capturaron imágenes, vídeo
+ni trazas. La advertencia conocida de tamaño del bundle permanece.
+
+### Commits del incremento
+
+| Commit | Cambio |
+| --- | --- |
+| `57e44d7` | Herramientas aisladas portables y pruebas iniciales. |
+| `b39a850` | Directorios temporales canónicos en las pruebas. |
+| `793fe81` | Guía desde clone, reglas de agentes, ADR-003 y backlog. |
+| `24baaac` | Plantilla PR y workflow de cuatro plataformas. |
+| `d9996ce` | Reglas de mayúsculas de PATH según el host y regresión. |
+| Commit que contiene esta actualización | Registro de verificación y entrega. |
+
+No se han ejecutado Windows ni macOS en este entorno. Su implementación está
+preparada, pero su compatibilidad queda pendiente de los jobs correspondientes.
+La compilación nativa de wasm-pack en Apple Silicon tampoco se ha ejecutado aquí.
+No se ha probado un setup desde cero en un segundo checkout local; CI lo realizará
+sin reutilizar `.tools/`. Las revisiones humanas visual y audible siguen pendientes,
+registradas en [BACKLOG.md](./BACKLOG.md). Estos commits no se han empujado ni se ha
+publicado un PR. Se deja un borrador local de descripción en `.tools/pr-description.md`.

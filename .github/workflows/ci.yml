@@ -1,0 +1,63 @@
+name: Validate demo
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15-intel, macos-15]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '26.13.0'
+      - name: Explicit tool and dependency setup
+        run: node scripts/dev.mjs setup
+      - name: Verify rerunnable setup
+        run: node scripts/dev.mjs setup
+      - name: Diagnose isolated environment and WebGL
+        run: node scripts/dev.mjs doctor
+      - name: Tooling platform and argument tests
+        run: node scripts/dev.mjs npm --prefix apps/web run test:tooling
+      - name: Rust debug tests
+        run: node scripts/dev.mjs cargo test --workspace --locked
+      - name: Rust release tests
+        run: node scripts/dev.mjs cargo test --workspace --release --locked
+      - name: Rust formatting
+        run: node scripts/dev.mjs cargo fmt --all -- --check
+      - name: Rust lint
+        run: node scripts/dev.mjs cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Frontend formatting
+        run: node scripts/dev.mjs npm --prefix apps/web run format:check
+      - name: Strict TypeScript
+        run: node scripts/dev.mjs npm --prefix apps/web run typecheck
+      - name: Frontend unit tests
+        run: node scripts/dev.mjs npm --prefix apps/web run test
+      - name: Real WASM contract
+        run: node scripts/dev.mjs npm --prefix apps/web run test:wasm
+      - name: Production build and Chromium at default base
+        run: node scripts/dev.mjs npm --prefix apps/web run test:e2e
+      - name: Production build at subpath
+        run: node scripts/dev.mjs npm --prefix apps/web run build -- --base=/cryptolab/
+      - name: Chromium at subpath
+        env:
+          TEST_BASE_URL: http://127.0.0.1:4173/cryptolab/
+          TEST_BASE_PATH: /cryptolab/
+        run: node scripts/dev.mjs npm --prefix apps/web run test:browser
+      - name: Check whitespace and tracked artifacts
+        run: node scripts/review.mjs

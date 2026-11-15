@@ -10,7 +10,7 @@ test('repository pins match declarations, lockfiles and installed browser/depend
   checkVersionPins({ installed: true });
 });
 
-test('consistency checks reject drift before downloads', () => {
+test('consistency checks accept Windows line endings and reject version drift', () => {
   const directory = mkdtempSync(path.join(tmpdir(), 'cryptolab version check '));
   try {
     const files = [
@@ -23,6 +23,10 @@ test('consistency checks reject drift before downloads', () => {
     for (const file of files) {
       mkdirSync(path.dirname(path.join(directory, file)), { recursive: true });
       cpSync(path.join(root, file), path.join(directory, file));
+    }
+    for (const file of ['crates/crypto-wasm/Cargo.toml', 'Cargo.lock']) {
+      const target = path.join(directory, file);
+      writeFileSync(target, readFileSync(target, 'utf8').replace(/\r?\n/g, '\r\n'));
     }
     checkVersionPins({ directory });
     for (const [file, before, after] of [

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { root } from './tooling.mjs';
 
 export function checkVersionPins({ directory = root, installed = false } = {}) {
-  const read = (file) => readFileSync(path.join(directory, file), 'utf8');
+  const read = (file) => readFileSync(path.join(directory, file), 'utf8').replace(/\r\n/g, '\n');
   const json = (file) => JSON.parse(read(file));
   const pins = json('scripts/versions.json');
   const manifest = json('apps/web/package.json');

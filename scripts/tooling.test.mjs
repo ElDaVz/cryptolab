@@ -33,6 +33,23 @@ test('Windows environment deduplicates Path and confines tool paths to child', (
   assert.equal(base.PATH, undefined);
 });
 
+test('PATH casing follows host rules without changing the caller environment', () => {
+  const windows = projectEnvironment(
+    { Path: 'native', PATH: 'duplicate' },
+    'C:\\demo',
+    platformConfig('win32', 'x64'),
+  );
+  assert.equal(Object.keys(windows).filter((key) => key.toLowerCase() === 'path').length, 1);
+  assert.ok(windows.PATH.endsWith(';native'));
+  const unix = projectEnvironment(
+    { Path: 'unrelated', PATH: '/bin' },
+    '/demo',
+    platformConfig('linux', 'x64'),
+  );
+  assert.equal(unix.Path, 'unrelated');
+  assert.ok(unix.PATH.endsWith(':/bin'));
+});
+
 test('process arguments and working directories preserve spaces and shell metacharacters', () => {
   const cwd = mkdtempSync(path.join(tmpdir(), 'cryptolab tooling '));
   try {

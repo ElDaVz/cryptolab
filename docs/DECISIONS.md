@@ -46,35 +46,30 @@ WebGL y contadores del renderer; no sustituye una revisión artística/audible.
 
 ## ADR-003 — Entrada portable y validación por plataforma
 
-**Estado:** implementada; verificada localmente en Linux. Pendiente de ejecución
-CI en Windows y macOS. Amplía la restricción inicial de ADR-002.
+**Estado:** implementada; alcance de plataformas actualizado por ADR-005.
 
 ### Decisión
 
-Usar `node scripts/dev.mjs` como entrada común para Linux x64, Windows x64 nativo,
-macOS Intel y Apple Silicon. Conservar `scripts/dev` como alias Unix. Compartir
-rutas, tripletas, sufijos ejecutables y entorno en `scripts/tooling.mjs`; invocar
-npm mediante Node y su CLI JS para preservar argumentos sin interpolación de shell.
-Mantener las versiones fijadas y las descargas solo en setup. En Apple Silicon,
-compilar wasm-pack 0.13.1 con Cargo `--locked` bajo `.tools/` porque esa versión
-carece de binario macOS ARM. Rustup y ambos targets usan el mismo Rust fijado.
+Usar `node scripts/dev.mjs` como entrada común para Linux x64 y Windows x64 nativo.
+Conservar `scripts/dev` como alias Unix. Compartir rutas, tripletas, sufijos
+ejecutables y entorno en `scripts/tooling.mjs`; invocar npm mediante Node y su CLI
+JS para preservar argumentos sin interpolación de shell. Mantener las versiones
+fijadas y las descargas solo en setup. Rustup y ambos targets usan el mismo Rust.
 
 ### Consecuencias
 
 Cada host necesita su compilador nativo antes de setup; Windows usa MSVC y Windows
-SDK, macOS las Command Line Tools. El primer setup ARM de macOS tarda más que una
-descarga de binario, sin requerir Rosetta ni cambiar la versión de wasm-pack.
-Doctor diagnostica y enlaza pruebas sin instalar. CI parte de checkouts limpios,
-repite setup y ejecuta las mismas comprobaciones en cuatro runners. Un workflow
-configurado no constituye evidencia de una ejecución correcta. La plantilla de
-PR es Markdown; GitHub Actions comprueba los cambios y no crea ni integra PRs.
+SDK. Doctor diagnostica y enlaza pruebas sin instalar. CI parte de checkouts limpios,
+repite setup y ejecuta las mismas comprobaciones en los dos runners soportados.
+Un workflow configurado no constituye evidencia de una ejecución correcta.
+La plantilla de PR es Markdown; GitHub Actions comprueba cambios y no crea ni integra PRs.
 
 Referencias: [runners oficiales de GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
 y [assets de wasm-pack 0.13.1](https://github.com/wasm-bindgen/wasm-pack/releases/expanded_assets/v0.13.1).
 
 ## ADR-004 — npm local explícito y coherencia de versiones en CI
 
-**Estado:** implementada; ejecución remota de los cuatro hosts pendiente.
+**Estado:** implementada; el usuario confirmó CI correcto en Ubuntu y Windows.
 
 ### Contexto y decisión
 
@@ -109,3 +104,13 @@ real de compilación, pruebas y navegador en cada sistema.
 
 Referencias: [npm incluido en Node 26.13.0](https://raw.githubusercontent.com/nodejs/node/v26.13.0/deps/npm/package.json)
 y [requisitos de npm 12.2.2](https://raw.githubusercontent.com/npm/cli/v12.2.2/package.json).
+
+## ADR-005 — Entorno soportado limitado a Ubuntu y Windows
+
+**Estado:** aprobada por el usuario e implementada.
+
+Mantener únicamente `ubuntu-24.04` y `windows-2022` en CI y sus plataformas x64
+en el setup. Se retiran las demás tripletas y la compilación auxiliar de wasm-pack
+que requerían. Las plataformas fuera de esta lista se rechazan explícitamente.
+El usuario confirmó checks correctos en ambos hosts retenidos. No se cambian pins,
+lockfiles ni comprobaciones del resto de la matriz. Esta decisión actualiza ADR-003.

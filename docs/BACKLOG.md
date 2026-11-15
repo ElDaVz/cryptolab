@@ -6,7 +6,7 @@ para implementar, seguir [AGENTS.md](../AGENTS.md), la [visión](./VISION.md), l
 
 | Pendiente | Criterio de cierre | Estado |
 | --- | --- | --- |
-| Validar instalación desde cero en Windows x64 nativo, macOS Intel y Apple Silicon | Setup repetible, doctor y todos los checks de cada job CI correctos; guardar enlace a la ejecución | Configurado en CI; no ejecutado en estos hosts localmente |
+| Registrar evidencia CI de Ubuntu y Windows x64 nativo | Guardar enlace a la ejecución aprobada de ambos jobs | Checks correctos según confirmación del usuario; falta enlazar la ejecución |
 | Revisar calidad visual de escena y cámaras | Evaluación humana de materiales, encuadres y legibilidad, sin capturas | Pendiente |
 | Revisar calidad audible | Escucha humana del audio opcional y control de volumen/silencio | Pendiente |
 

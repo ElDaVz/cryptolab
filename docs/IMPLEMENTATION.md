@@ -122,8 +122,7 @@ requisitos por plataforma y diagnóstico. AGENTS incorpora ramas por asignación
 commits pequeños, ruta de lectura de especificaciones y entrega mediante draft PR,
 respetando instrucciones de trabajo local. La plantilla está en
 [.github/pull_request_template.md](../.github/pull_request_template.md) y la
-[matriz CI](../.github/workflows/ci.yml) cubre Linux x64, Windows x64 nativo,
-macOS Intel y Apple Silicon. No se modifica el dominio ni las especificaciones.
+[matriz CI](../.github/workflows/ci.yml) cubre actualmente Linux x64 y Windows x64 nativo. No se modifica el dominio ni las especificaciones.
 
 ### Evidencia ejecutada en este incremento
 
@@ -137,7 +136,7 @@ En Linux x86_64 con las versiones exactas ya registradas:
   y un doctest correctos. Formato Rust y Clippy con `-D warnings`: correctos.
 - `node scripts/dev.mjs npm --prefix apps/web run test:tooling`: cuatro pruebas
   correctas; tripletas, sufijos, reglas PATH, aislamiento, argumentos literales y
-  directorio con espacios. Las rutas temporales se comparan canónicamente para macOS.
+  directorio con espacios. Las rutas temporales se comparan canónicamente.
 - `typecheck`, `format:check` y `test` mediante el mismo wrapper npm: correctos;
   Vitest conserva 24 pruebas correctas.
 - `test:wasm`: contratos del módulo real y 312 round trips correctos.
@@ -159,13 +158,12 @@ ni trazas. La advertencia conocida de tamaño del bundle permanece.
 | `57e44d7` | Herramientas aisladas portables y pruebas iniciales. |
 | `b39a850` | Directorios temporales canónicos en las pruebas. |
 | `793fe81` | Guía desde clone, reglas de agentes, ADR-003 y backlog. |
-| `24baaac` | Plantilla PR y workflow de cuatro plataformas. |
+| `24baaac` | Plantilla PR y workflow multiplataforma. |
 | `d9996ce` | Reglas de mayúsculas de PATH según el host y regresión. |
 | Commit que contiene esta actualización | Registro de verificación y entrega. |
 
-No se han ejecutado Windows ni macOS en este entorno. Su implementación está
-preparada, pero su compatibilidad queda pendiente de los jobs correspondientes.
-La compilación nativa de wasm-pack en Apple Silicon tampoco se ha ejecutado aquí.
+La validación local de este incremento fue Linux; los resultados remotos se
+actualizan al final de este documento.
 No se ha probado un setup desde cero en un segundo checkout local; CI lo realizará
 sin reutilizar `.tools/`. Las revisiones humanas visual y audible siguen pendientes,
 registradas en [BACKLOG.md](./BACKLOG.md). Estos commits no se han empujado ni se ha
@@ -317,6 +315,24 @@ de Playwright en este host y disponibilidad de un wasm-pack más nuevo; se manti
 las versiones fijadas que se han probado.
 
 Los cambios están en commits locales de `feat/first-desktop-demo`, sin push ni merge.
-La nueva ejecución remota de los cuatro jobs sigue pendiente: los resultados Linux
-no certifican Windows, macOS Intel ni Apple Silicon, incluida la compilación nativa
-de wasm-pack en este último. Las capturas y el tracing permanecen desactivados.
+En esa entrega la nueva ejecución remota seguía pendiente; su estado posterior se
+registra a continuación. Las capturas y el tracing permanecen desactivados.
+
+
+## Alcance de plataformas — Ubuntu y Windows
+
+Por petición del usuario, CI y setup conservan únicamente Ubuntu/Linux x86_64 y
+Windows x64 nativo. Se eliminan los otros runners, tripletas y el código de
+compilación auxiliar de wasm-pack. README, backlog y ADR-003/004 se ajustan al
+alcance actual, registrado en ADR-005. Los lockfiles conservan los metadatos de
+dependencias opcionales que genera npm; no declaran soporte de plataformas.
+
+El usuario confirmó checks CI correctos en Ubuntu y Windows para la entrega
+anterior. Esta confirmación es evidencia comunicada por el usuario; no se ha
+consultado la ejecución remota desde este entorno.
+
+Verificación local de esta reducción: diez pruebas de tooling, doctor con WebGL,
+comprobación de formato, enlaces relativos y `git diff --check` correctos.
+Se verificó que la única modificación del workflow es retirar los dos runners
+excluidos; se conservan todos los pasos de Ubuntu y Windows. No se repitieron las
+suites de aplicación porque este cambio retira plataformas y documentación.

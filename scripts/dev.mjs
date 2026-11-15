@@ -77,21 +77,6 @@ try {
     ]) {
       if (existsSync(scoped(name)) && output(name, ['--version']) === `${name} ${version}`)
         continue;
-      if (name === 'wasm-pack' && config.platform === 'darwin' && config.arch === 'arm64') {
-        const installRoot = path.join(root, '.tools', 'wasm-pack-source');
-        run('cargo', [
-          'install',
-          'wasm-pack',
-          '--version',
-          `=${version}`,
-          '--locked',
-          '--root',
-          installRoot,
-          '--force',
-        ]);
-        cpSync(path.join(installRoot, 'bin', name), scoped(name));
-        continue;
-      }
       const folder = `${name}-${name === 'wasm-pack' ? 'v' : ''}${version}-${config.artifact}`;
       download(
         `https://github.com/wasm-bindgen/${repo}/releases/download/${name === 'wasm-pack' ? 'v' : ''}${version}/${folder}.tar.gz`,

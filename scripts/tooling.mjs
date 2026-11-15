@@ -9,8 +9,6 @@ export function platformConfig(platform = process.platform, arch = process.arch)
   const targets = {
     'linux-x64': ['x86_64-unknown-linux-gnu', 'x86_64-unknown-linux-musl'],
     'win32-x64': ['x86_64-pc-windows-msvc', 'x86_64-pc-windows-msvc'],
-    'darwin-x64': ['x86_64-apple-darwin', 'x86_64-apple-darwin'],
-    'darwin-arm64': ['aarch64-apple-darwin', 'aarch64-apple-darwin'],
   };
   const targetsForHost = targets[`${platform}-${arch}`];
   if (!targetsForHost) throw new Error(`Unsupported host: ${platform}-${arch}`);

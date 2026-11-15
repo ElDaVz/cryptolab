@@ -1,0 +1,2 @@
+# Keep text checkouts consistent for formatters and the Unix command wrapper.
+* text=auto eol=lf

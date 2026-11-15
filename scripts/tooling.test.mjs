@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { platformConfig, projectEnvironment, execute, npmCli } from './tooling.mjs';
@@ -47,7 +47,7 @@ test('process arguments and working directories preserve spaces and shell metach
       { cwd, stdio: 'pipe', encoding: 'utf8' },
     );
     assert.equal(result.status, 0, result.error?.message);
-    assert.deepEqual(JSON.parse(result.stdout), { args, cwd });
+    assert.deepEqual(JSON.parse(result.stdout), { args, cwd: realpathSync(cwd) });
     assert.match(npmCli(), /npm-cli\.js$/);
     const npm = execute('npm', ['--version'], { stdio: 'pipe', encoding: 'utf8' });
     assert.equal(npm.status, 0, npm.error?.message);

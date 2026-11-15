@@ -219,3 +219,29 @@ Preserve mathematical clarity, modularity and verifiability before adding visual
 - [Project Vision](./docs/VISION.md)
 - [Software Architecture](./docs/ARCHITECTURE.md)
 - [Affine Cipher Specification](./docs/specs/cipher-affine.md)
+
+## 14. Git, Task Size and Pull Requests
+
+- Read this file and the [execution guide](./README.md#preparación-y-ejecución) before running tools. Use `node scripts/dev.mjs` (or the Unix alias `./scripts/dev`); run explicit `setup` before ordinary offline builds. Do not change system Rust, shell profiles or global PATH.
+- Inspect `git status` and preserve unrelated changes. Create one branch per assignment from the agreed base: `feat/<topic>`, `fix/<topic>`, `docs/<topic>` or `chore/<topic>`. Never commit directly to `main`. Work already assigned to `feat/first-desktop-demo` stays there until its demo PR is complete.
+- Split the assignment into small, coherent tasks. Identify the relevant specification and verifiable acceptance criteria before each implementation. Resolve genuine specification conflicts with the user.
+- After each small task, execute its relevant checks, inspect the diff and make a separate commit. Use descriptive messages such as `docs: explain fresh clone setup` or `fix: preserve Windows tool arguments`. Do not bundle unrelated work or commit generated files/secrets.
+- Before handoff, run the applicable checks in the README, review architecture and update affected documentation. Record exact commands, actual results and checks that could not run.
+- Unless the user explicitly requests local work or forbids pushing, publish the assignment branch and open or update a draft PR targeting the agreed base. Use the [PR template](./.github/pull_request_template.md), link specifications and report actual evidence and limitations. Update an existing assignment PR rather than duplicating it. Never merge automatically.
+- Local-only/no-push instructions take precedence: leave verified commits and a reviewable PR description locally, reporting that the PR was not published.
+- The [CI workflow](./.github/workflows/ci.yml) validates code; it does not create or merge PRs. Cross-platform support is verified only after the corresponding jobs pass. Screenshots, video and image-bearing traces must remain disabled.
+
+### Documentation routing
+
+Start with [Vision](./docs/VISION.md), [Architecture](./docs/ARCHITECTURE.md) and [Decisions](./docs/DECISIONS.md), then follow the relevant route and its relative links:
+
+| Work area | Required specifications |
+| --- | --- |
+| Integer mathematics and ciphers | [Math foundations](./docs/specs/math-foundations.md), [Caesar](./docs/specs/cipher-caesar.md), [Affine](./docs/specs/cipher-affine.md) |
+| WASM boundary and distribution | [WASM integration](./docs/specs/wasm-integration.md) |
+| State, exercise and authorized information | [Learning flow](./docs/specs/learning-flow.md), [Perspectives](./docs/specs/perspectives.md) |
+| Introduction, forms and accessibility | [Desktop experience](./docs/specs/desktop-experience.md), [Learning flow](./docs/specs/learning-flow.md) |
+| Scene, camera, controls, animation and audio | [Machine interaction](./docs/specs/machine-interaction.md), [Animation system](./docs/specs/animation-system.md) |
+| Tooling, onboarding and verification | [README](./README.md), [Decisions](./docs/DECISIONS.md), [Implementation evidence](./docs/IMPLEMENTATION.md) |
+
+Keep unimplemented team observations in the [backlog](./docs/BACKLOG.md). A backlog entry does not replace an approved specification or authorize implementation.

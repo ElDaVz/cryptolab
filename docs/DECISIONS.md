@@ -43,3 +43,31 @@ optimización adicional; Cargo release sigue optimizando el módulo. El runtime
 continúa siendo estático, sin backend. Se usa Chromium headless para las pruebas,
 sin screenshots, vídeo ni trazas. El renderizado se verifica mediante consultas
 WebGL y contadores del renderer; no sustituye una revisión artística/audible.
+
+## ADR-003 — Entrada portable y validación por plataforma
+
+**Estado:** implementada; verificada localmente en Linux. Pendiente de ejecución
+CI en Windows y macOS. Amplía la restricción inicial de ADR-002.
+
+### Decisión
+
+Usar `node scripts/dev.mjs` como entrada común para Linux x64, Windows x64 nativo,
+macOS Intel y Apple Silicon. Conservar `scripts/dev` como alias Unix. Compartir
+rutas, tripletas, sufijos ejecutables y entorno en `scripts/tooling.mjs`; invocar
+npm mediante Node y su CLI JS para preservar argumentos sin interpolación de shell.
+Mantener las versiones fijadas y las descargas solo en setup. En Apple Silicon,
+compilar wasm-pack 0.13.1 con Cargo `--locked` bajo `.tools/` porque esa versión
+carece de binario macOS ARM. Rustup y ambos targets usan el mismo Rust fijado.
+
+### Consecuencias
+
+Cada host necesita su compilador nativo antes de setup; Windows usa MSVC y Windows
+SDK, macOS las Command Line Tools. El primer setup ARM de macOS tarda más que una
+descarga de binario, sin requerir Rosetta ni cambiar la versión de wasm-pack.
+Doctor diagnostica y enlaza pruebas sin instalar. CI parte de checkouts limpios,
+repite setup y ejecuta las mismas comprobaciones en cuatro runners. Un workflow
+configurado no constituye evidencia de una ejecución correcta. La plantilla de
+PR es Markdown; GitHub Actions comprueba los cambios y no crea ni integra PRs.
+
+Referencias: [runners oficiales de GitHub](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+y [assets de wasm-pack 0.13.1](https://github.com/wasm-bindgen/wasm-pack/releases/expanded_assets/v0.13.1).

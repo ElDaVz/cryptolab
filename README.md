@@ -13,56 +13,98 @@ sin WebGL. La sesión vive en memoria y se pierde al recargar.
 
 ## Preparación y ejecución
 
-El instalador de herramientas fijadas soporta **Linux x86_64**. Requiere Node
-**26.13.0**, npm **12.2.2**, `curl`, `tar`, un enlazador C nativo y bibliotecas del
-host compatibles con Chromium. No cambia instalaciones del sistema, perfiles de
-shell ni PATH global. Las descargas ocurren solamente durante setup; requiere
-acceso a los servidores oficiales de Rust, GitHub, npm y Playwright.
+1. Instalar Git y **Node 26.13.0 con npm 12.2.2**. Comprobar `node --version`
+   y `npm --version`. Las versiones son exactas; el wrapper informa cualquier diferencia.
+2. Preparar el compilador y las utilidades nativas del host:
 
-Desde la raíz:
+   | Plataforma prevista | Requisitos previos |
+   | --- | --- |
+   | Linux x86_64 | `curl`, `tar`, compilador/enlazador C (`cc`) y bibliotecas compatibles con Chromium |
+   | Windows x64 nativo | PowerShell, `curl.exe`, `tar.exe`, Visual Studio Build Tools con «Desktop development with C++» y Windows SDK; abrir Developer PowerShell x64 |
+   | macOS Intel o Apple Silicon | `curl`, `tar` y Xcode Command Line Tools (`xcode-select --install`) |
 
-```sh
-./scripts/dev setup
-./scripts/dev doctor
-./scripts/dev npm --prefix apps/web run dev
-```
+   La validación local realizada es Linux. Windows y ambos macOS están configurados
+   en CI; requieren resultados correctos allí antes de considerarlos verificados.
+3. Clonar **la rama que contiene esta demo**, mientras no se haya integrado a `main`:
 
-Vite imprime la URL local (normalmente `http://127.0.0.1:5173`). Cambiar Rust
-requiere reiniciar `dev` para regenerar WASM; Vite vigila TypeScript y CSS.
+   ```sh
+   git clone --branch feat/first-desktop-demo https://github.com/ElDaVz/cryptolab.git
+   cd cryptolab
+   ```
 
-`setup` es seguro de repetir. Instala Rust **1.100.0** y el target
-`wasm32-unknown-unknown`, rustfmt/Clippy, wasm-pack **0.13.1** y wasm-bindgen
-**0.2.105** bajo `.tools/`; usa `npm ci` y descarga Chromium headless
-**159.0.8154.6**, revisión **1255**, de Playwright **1.65.1** en `.tools/browsers/`.
-Las versiones están en [scripts/versions.json](./scripts/versions.json), los
-manifiestos y los lockfiles. `doctor` informa discrepancias, comprueba compilación
-nativa, target WASM y lanzamiento/renderizado WebGL, sin instalar herramientas.
+   Después de integrar el PR, usar `git clone https://github.com/ElDaVz/cryptolab.git`
+   para obtener `main`. No mezclar instrucciones de esta demo con un checkout anterior.
+4. Instalar las herramientas y dependencias fijadas desde la raíz del repositorio:
 
-El wrapper aplica el entorno solo a sus procesos hijos. Cargo ordinario trabaja
-en modo offline; `predev`/`prebuild` generan bindings con `--mode no-install`,
-`--no-opt`, `--locked` y `--offline`. No se necesita wasm-opt/Binaryen. Setup
-prepara el CLI wasm-bindgen que wasm-pack necesita. Si falta una dependencia,
-ejecutar setup explícitamente.
+   ```sh
+   node scripts/dev.mjs setup
+   ```
 
-Si Chromium no arranca, revisar primero el error de `doctor` y las bibliotecas
-con `ldd .tools/browsers/chromium_headless_shell-1255/chrome-headless-shell-linux64/chrome-headless-shell`.
-Setup no instala paquetes del sistema. En el host validado funcionó el build
-fallback Ubuntu 24.04 de Playwright sin cambios del sistema.
+   Necesita red hacia Rust, GitHub, npm y Playwright. Es seguro repetirlo. Instala
+   Rust **1.100.0**, targets nativo/WASM, rustfmt/Clippy, wasm-pack **0.13.1**,
+   wasm-bindgen **0.2.105**, dependencias del lockfile y Chromium **159.0.8154.6**
+   de Playwright **1.65.1**. En Apple Silicon compila wasm-pack nativamente durante
+   setup, porque esa versión no publica binario macOS ARM; puede tardar más.
+   Setup termina solo después de pruebas nativas, módulo WASM mínimo, build frontend
+   y comprobación de dibujo WebGL en Chromium.
+5. Comprobar el entorno sin instalar herramientas:
+
+   ```sh
+   node scripts/dev.mjs doctor
+   ```
+
+   Deben aparecer correctos Node/npm, Rust, target WASM, wasm-pack, wasm-bindgen
+   y Chromium/WebGL. Si falla, resolver el diagnóstico antes de continuar.
+6. Iniciar la demo:
+
+   ```sh
+   node scripts/dev.mjs npm --prefix apps/web run dev
+   ```
+
+   Abrir la URL que imprime Vite (normalmente `http://localhost:5173`). Mantener
+   abierta la terminal; detener con **Ctrl+C**. TypeScript/CSS se actualizan en vivo.
+   Después de cambiar Rust, detener y reiniciar este comando para regenerar WASM.
+7. Ejecutar las comprobaciones de la sección siguiente antes de entregar cambios.
+
+Los comandos `node scripts/dev.mjs …` funcionan en PowerShell y shells Unix.
+En Unix también existe el alias `./scripts/dev …`. El wrapper aplica el entorno
+solo a sus procesos hijos: no cambia perfiles, PATH global ni instalaciones del sistema.
+Herramientas en `.tools/`, dependencias y builds permanecen ignorados por Git.
+Las versiones están en [scripts/versions.json](./scripts/versions.json), manifiestos y lockfiles.
+Los builds ordinarios usan Cargo offline y wasm-pack `--mode no-install --no-opt
+--locked --offline`; si falta una dependencia, ejecutar setup explícitamente.
+
+### Resolver problemas de preparación
+
+- **Versión de Node/npm incorrecta:** activar las versiones indicadas antes de setup;
+  el proyecto no modifica sus instalaciones globales.
+- **Compilador o enlazador ausente:** instalar los requisitos de la tabla. En Windows,
+  comprobar que la terminal tenga el entorno de Visual Studio x64. `doctor` enlaza
+  los ejecutables de pruebas nativas sin ejecutarlos.
+- **Chromium no arranca:** leer su error en `doctor`. En Linux, localizar el binario
+  bajo `.tools/browsers/` y consultar sus bibliotecas con `ldd <ruta-del-binario>`.
+  Diagnosticar las bibliotecas ausentes antes de proponer paquetes del sistema.
+  Setup no instala paquetes del sistema.
+- **Falta un tool/target o dependencia offline:** repetir `node scripts/dev.mjs setup`.
+- **Puerto ocupado:** abrir la URL alternativa de Vite en desarrollo. Para las pruebas,
+  detener el preview propio que use 4173; no terminar procesos de otros proyectos.
 
 ## Build estático y pruebas
 
 ```sh
-./scripts/dev npm --prefix apps/web run build
-./scripts/dev npm --prefix apps/web run preview -- --port 4173
+node scripts/dev.mjs npm --prefix apps/web run build
+node scripts/dev.mjs npm --prefix apps/web run preview -- --port 4173
 
-./scripts/dev cargo test --workspace --locked
-./scripts/dev cargo test --workspace --release --locked
-./scripts/dev cargo fmt --all -- --check
-./scripts/dev cargo clippy --workspace --all-targets --locked -- -D warnings
-./scripts/dev npm --prefix apps/web run typecheck
-./scripts/dev npm --prefix apps/web run test
-./scripts/dev npm --prefix apps/web run test:wasm
-./scripts/dev npm --prefix apps/web run test:e2e
+node scripts/dev.mjs cargo test --workspace --locked
+node scripts/dev.mjs cargo test --workspace --release --locked
+node scripts/dev.mjs cargo fmt --all -- --check
+node scripts/dev.mjs cargo clippy --workspace --all-targets --locked -- -D warnings
+node scripts/dev.mjs npm --prefix apps/web run format:check
+node scripts/dev.mjs npm --prefix apps/web run test:tooling
+node scripts/dev.mjs npm --prefix apps/web run typecheck
+node scripts/dev.mjs npm --prefix apps/web run test
+node scripts/dev.mjs npm --prefix apps/web run test:wasm
+node scripts/dev.mjs npm --prefix apps/web run test:e2e
 ```
 
 `test:e2e` regenera WASM release y el build, inicia su propio Vite preview en el
@@ -75,11 +117,21 @@ Solo necesita servir archivos estáticos y `.wasm` con MIME `application/wasm`.
 Para verificar una subruta explícita:
 
 ```sh
-./scripts/dev npm --prefix apps/web run build -- --base=/cryptolab/
-TEST_BASE_URL=http://127.0.0.1:4173/cryptolab/ TEST_BASE_PATH=/cryptolab/ ./scripts/dev npm --prefix apps/web run test:browser
+node scripts/dev.mjs npm --prefix apps/web run build -- --base=/cryptolab/
+TEST_BASE_URL=http://127.0.0.1:4173/cryptolab/ TEST_BASE_PATH=/cryptolab/ node scripts/dev.mjs npm --prefix apps/web run test:browser
 ```
 
-Para volver al build predeterminado: `./scripts/dev npm --prefix apps/web run build`.
+En PowerShell, las variables de la prueba de subruta se asignan así:
+
+```powershell
+$env:TEST_BASE_URL = "http://127.0.0.1:4173/cryptolab/"
+$env:TEST_BASE_PATH = "/cryptolab/"
+node scripts/dev.mjs npm --prefix apps/web run test:browser
+Remove-Item Env:TEST_BASE_URL
+Remove-Item Env:TEST_BASE_PATH
+```
+
+Para volver al build predeterminado: `node scripts/dev.mjs npm --prefix apps/web run build`.
 No se incluye backend, despliegue ni publicación automática.
 
 ## Arquitectura y contratos
@@ -115,7 +167,7 @@ se registran en [docs/IMPLEMENTATION.md](./docs/IMPLEMENTATION.md).
 - [Fundamentos](./docs/specs/math-foundations.md), [César](./docs/specs/cipher-caesar.md) y [afín](./docs/specs/cipher-affine.md).
 - [Recorrido](./docs/specs/learning-flow.md) y [perspectivas](./docs/specs/perspectives.md).
 - [Escritorio](./docs/specs/desktop-experience.md), [máquina](./docs/specs/machine-interaction.md), [animación/audio](./docs/specs/animation-system.md) y [WASM](./docs/specs/wasm-integration.md).
-- [Instrucciones para agentes](./AGENTS.md).
+- [Instrucciones para agentes](./AGENTS.md), [plantilla de PR](./.github/pull_request_template.md), [CI](./.github/workflows/ci.yml) y [pendientes del equipo](./docs/BACKLOG.md).
 
 Chromium de escritorio es el navegador objetivo desde 1280×720. Ventanas menores
 conservan acceso mediante desplazamiento; Firefox/Safari y aceptación móvil no

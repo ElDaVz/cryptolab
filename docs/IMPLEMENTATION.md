@@ -170,3 +170,81 @@ No se ha probado un setup desde cero en un segundo checkout local; CI lo realiza
 sin reutilizar `.tools/`. Las revisiones humanas visual y audible siguen pendientes,
 registradas en [BACKLOG.md](./BACKLOG.md). Estos commits no se han empujado ni se ha
 publicado un PR. Se deja un borrador local de descripción en `.tools/pr-description.md`.
+
+## Siguiente iteración acordada
+
+**Estado: diseño acordado para el equipo; implementación y verificación pendientes.**
+Esta sección describe la evolución propuesta a partir de la revisión de la demo.
+No forma parte de los resultados ejecutados registrados arriba. El trabajo actual
+se limita a documentación: no cambia la aplicación, las APIs Rust/WASM ni las
+especificaciones vigentes.
+
+### Observaciones y dirección educativa
+
+La máquina actual muestra dos anillos de correspondencias, sin apertura física.
+La revisión del usuario pide letras claramente visibles, como en un candado, y
+una separación comprensible entre el alfabeto cifrado y el de referencia.
+César será el recorrido principal y conservará el desplazamiento fijo **+8**.
+Afín seguirá disponible como modo secundario avanzado, con una explicación visual
+propia de sus operaciones. La disconformidad con su representación no se registra
+como un fallo matemático demostrado: las pruebas existentes del núcleo son evidencia
+distinta de la calidad de la explicación visual.
+
+### Máquina de César y apertura
+
+La propuesta utiliza dos discos o engranajes sobre el mismo eje: delante queda el
+alfabeto cifrado desplazado y detrás el alfabeto de referencia A–Z. Al abrir,
+los discos se separan sobre ese eje lo suficiente para comparar sus letras sin
+ocultamientos. Ambos tendrán etiquetas claras y un indicador para leer la pareja.
+
+En el emisor, la máquina comienza cerrada y ofrece un control explícito para
+abrir/cerrar. El mecanismo interno presenta los dos discos abiertos. El interceptor
+mantiene su máquina cerrada y utiliza solamente su contexto candidato; al consultar
+el interior de un intento, ambos discos representan exclusivamente ese intento,
+sin incorporar la configuración ni la traza original. Los datos del contexto
+anterior se retiran antes de cualquier apertura o transición.
+
+El desplazamiento relativo entre alfabetos expresa la configuración fija +8.
+El giro de selección permite inspeccionar otra letra conservando esa correspondencia;
+no cambia la clave. Deben distinguirse visualmente ambas funciones. En descifrado
+se recorre la correspondencia inversa. Los resultados y las parejas autorizadas
+proceden de Rust; los ángulos y animaciones nunca calculan un cifrado.
+
+### Afín como modo avanzado por etapas
+
+Una rotación uniforme no explica la multiplicación del cifrado afín. Su futura
+representación distinguirá multiplicación, desplazamiento y reducción módulo 26.
+El descifrado mostrará resta, multiplicación por el inverso y reducción, en el
+orden de la traza Rust. No se sugerirá que un simple giro reproduce toda la operación.
+Se conservarán la clave suministrada/normalizada, los errores y las explicaciones
+matemáticas del contexto autorizado.
+
+### Tareas ordenadas y criterios de aceptación pendientes
+
+| Orden | Tarea | Criterio de aceptación para la futura implementación |
+| --- | --- | --- |
+| 1 | Actualizar los contratos visuales | Revisar las especificaciones enlazadas abajo para acordar apertura, visibilidad, selección y etapas antes de cambiar código; definir sus pruebas de aceptación. |
+| 2 | Mejorar legibilidad de los alfabetos | Letras completas, contrastadas y sin solapamientos en los encuadres de escritorio previstos, incluyendo 1280×720 y 1920×1080; realizar evaluación humana además de comprobaciones automatizadas sin imágenes. |
+| 3 | Construir apertura y dos discos | Emisor cerrado inicialmente con control abrir/cerrar; interior abierto; discos distinguibles sobre el mismo eje, con etiquetas y lectura inequívoca bajo el indicador. |
+| 4 | Priorizar la explicación de César | Verificar A → I, X → F y los recorridos inversos I → A y F → X; conservar +8 fijo y distinguir selección de letra de desplazamiento entre alfabetos. |
+| 5 | Verificar perspectivas y transiciones | Interceptor cerrado y sin datos originales; el interior candidato usa solo su intento; retirar datos anteriores antes de transiciones y conservar las restricciones de solución del ejercicio. |
+| 6 | Representar afín por etapas | Cifrado y descifrado siguen sus trazas Rust; distinguir multiplicación/desplazamiento/módulo y no representar la multiplicación como rotación uniforme. |
+| 7 | Completar accesibilidad y movimiento | Apertura, cierre y selección tienen controles HTML/teclado; animaciones cancelables y compatibles con movimiento reducido; explicación textual completa sin WebGL. |
+
+Antes de implementar, actualizar conjuntamente [Máquina e interacción](./specs/machine-interaction.md),
+[Perspectivas](./specs/perspectives.md), [Animaciones](./specs/animation-system.md)
+y los apartados afectados de [Escritorio](./specs/desktop-experience.md).
+La especificación actual describe anillos concéntricos y una inspección sin apertura
+física: esta propuesta cambia ese contrato y no debe aplicarse silenciosamente.
+Consultar también [César](./specs/cipher-caesar.md), [Afín](./specs/cipher-affine.md),
+[Recorrido](./specs/learning-flow.md) y [Arquitectura](./ARCHITECTURE.md).
+El [backlog](./BACKLOG.md#evolución-acordada-de-la-máquina) enlaza estas tareas.
+
+### Entrega e integración
+
+Esta actualización documental se incorpora en un commit separado a
+`feat/first-desktop-demo`, sin push. El orden recomendado para integrar la demo es
+subir sus commits locales al único PR de esa rama, esperar las comprobaciones y
+fusionarlo en `main`. La implementación de la nueva máquina se hará después en
+una rama nueva creada desde ese `main` actualizado, con tareas y commits pequeños.
+La recomendación no significa que se haya publicado o fusionado ningún cambio.

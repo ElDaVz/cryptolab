@@ -1,36 +1,6 @@
-import { spawnSync } from 'node:child_process';
-import { readFileSync, existsSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { existsSync, mkdirSync, writeFileSync, cpSync } from 'node:fs';
 import path from 'node:path';
-const root = fileURLToPath(new URL('../', import.meta.url));
-const v = JSON.parse(readFileSync(path.join(root, 'scripts/versions.json')));
-const env = {
-  ...process.env,
-  RUSTUP_HOME: `${root}/.tools/rustup`,
-  CARGO_HOME: `${root}/.tools/cargo`,
-  RUSTUP_TOOLCHAIN: v.rust,
-  PLAYWRIGHT_BROWSERS_PATH: `${root}/.tools/browsers`,
-  npm_config_cache: `${root}/.tools/npm-cache`,
-  CARGO_NET_OFFLINE: 'true',
-  CARGO_TARGET_DIR: `${root}/target`,
-  WASM_PACK_CACHE: `${root}/.tools/wasm-pack-cache`,
-  PATH: `${root}/.tools/bin:${root}/.tools/cargo/bin:${process.env.PATH}`,
-};
-function scoped(command) {
-  if (['cargo', 'rustc', 'rustup'].includes(command)) return `${env.CARGO_HOME}/bin/${command}`;
-  if (['wasm-pack', 'wasm-bindgen'].includes(command)) return `${root}/.tools/bin/${command}`;
-  return command;
-}
-function run(command, args = [], options = {}) {
-  const r = spawnSync(scoped(command), args, { cwd: root, env, stdio: 'inherit', ...options });
-  if (r.error || r.status !== 0)
-    throw new Error(`${command} failed (${r.error?.message ?? r.status})`);
-}
-function output(command, args = []) {
-  const r = spawnSync(scoped(command), args, { cwd: root, env, encoding: 'utf8' });
-  if (r.error || r.status !== 0) throw new Error(`${command}: ${r.stderr || r.error}`);
-  return r.stdout.trim();
-}
+import { root, versions as v, env, config, toolchain, scoped, run, output } from './tooling.mjs';
 function checkNode() {
   for (const [cmd, want] of [
     ['node', v.node],
@@ -43,23 +13,26 @@ function checkNode() {
 function download(url, dest) {
   run('curl', ['--fail', '--location', '--retry', '2', url, '-o', dest]);
 }
-const toolchain = `${env.RUSTUP_HOME}/toolchains/${v.rust}-x86_64-unknown-linux-gnu`;
 function readyRust() {
-  if (!existsSync(`${toolchain}/bin/rustc`))
-    throw new Error(`Isolated Rust ${v.rust} missing; run ./scripts/dev setup`);
+  if (!existsSync(path.join(toolchain, 'bin', `rustc${config.suffix}`)))
+    throw new Error(`Isolated Rust ${v.rust} missing; run node scripts/dev.mjs setup`);
 }
 const [command, ...args] = process.argv.slice(2);
 try {
   if (command === 'setup') {
-    if (process.platform !== 'linux' || process.arch !== 'x64')
-      throw new Error('Pinned binary setup currently supports Linux x86_64');
     checkNode();
     mkdirSync(`${root}/.tools/bin`, { recursive: true });
     env.CARGO_NET_OFFLINE = 'false';
-    if (!existsSync(`${env.CARGO_HOME}/bin/rustup`)) {
-      download('https://sh.rustup.rs', `${root}/.tools/rustup-init.sh`);
-      run('sh', [
-        `${root}/.tools/rustup-init.sh`,
+    if (!existsSync(scoped('rustup'))) {
+      const installer = path.join(root, '.tools', `rustup-init${config.suffix || '.sh'}`);
+      download(
+        config.platform === 'win32'
+          ? `https://static.rust-lang.org/rustup/dist/${config.host}/rustup-init.exe`
+          : 'https://sh.rustup.rs',
+        installer,
+      );
+      run(config.platform === 'win32' ? installer : 'sh', [
+        ...(config.platform === 'win32' ? [] : [installer]),
         '-y',
         '--no-modify-path',
         '--profile',
@@ -87,22 +60,34 @@ try {
       ['wasm-pack', v.wasmPack, 'wasm-pack'],
       ['wasm-bindgen', v.wasmBindgen, 'wasm-bindgen'],
     ]) {
-      if (
-        existsSync(`${root}/.tools/bin/${name}`) &&
-        output(name, ['--version']) === `${name} ${version}`
-      )
+      if (existsSync(scoped(name)) && output(name, ['--version']) === `${name} ${version}`)
         continue;
-      const folder = `${name}-${name === 'wasm-pack' ? 'v' : ''}${version}-x86_64-unknown-linux-musl`;
+      if (name === 'wasm-pack' && config.platform === 'darwin' && config.arch === 'arm64') {
+        const installRoot = path.join(root, '.tools', 'wasm-pack-source');
+        run('cargo', [
+          'install',
+          'wasm-pack',
+          '--version',
+          `=${version}`,
+          '--locked',
+          '--root',
+          installRoot,
+          '--force',
+        ]);
+        cpSync(path.join(installRoot, 'bin', name), scoped(name));
+        continue;
+      }
+      const folder = `${name}-${name === 'wasm-pack' ? 'v' : ''}${version}-${config.artifact}`;
       download(
         `https://github.com/wasm-bindgen/${repo}/releases/download/${name === 'wasm-pack' ? 'v' : ''}${version}/${folder}.tar.gz`,
         `${root}/.tools/${name}.tar.gz`,
       );
       run('tar', ['-xzf', `${root}/.tools/${name}.tar.gz`, '-C', `${root}/.tools`]);
-      cpSync(`${root}/.tools/${folder}/${name}`, `${root}/.tools/bin/${name}`);
+      cpSync(path.join(root, '.tools', folder, name + config.suffix), scoped(name));
     }
     run('cargo', ['fetch', '--locked']);
     run('npm', ['--prefix', 'apps/web', 'ci']);
-    run(`${root}/apps/web/node_modules/.bin/playwright`, ['install', 'chromium', '--only-shell']);
+    run('node', ['apps/web/node_modules/playwright/cli.js', 'install', 'chromium', '--only-shell']);
     run('cargo', ['test', '--workspace', '--locked']);
     writeFileSync(
       `${root}/.tools/probe.rs`,
@@ -129,10 +114,10 @@ try {
         'Rust',
         () => {
           readyRust();
-          const got = output(`${toolchain}/bin/rustc`, ['--version']);
+          const got = output(path.join(toolchain, 'bin', `rustc${config.suffix}`), ['--version']);
           console.log(got);
           if (!got.startsWith(`rustc ${v.rust} `)) throw new Error('version mismatch');
-          run('cargo', ['check', '--workspace', '--locked']);
+          run('cargo', ['test', '--workspace', '--locked', '--no-run']);
         },
       ],
       [
@@ -174,11 +159,11 @@ try {
     if (failed) process.exitCode = 1;
   } else if (command === 'cargo') {
     readyRust();
-    run(`${env.CARGO_HOME}/bin/cargo`, args);
+    run('cargo', args);
   } else if (command === 'npm') {
     checkNode();
     run('npm', args);
-  } else throw new Error('Usage: ./scripts/dev setup | doctor | cargo … | npm …');
+  } else throw new Error('Usage: node scripts/dev.mjs setup | doctor | cargo … | npm …');
 } catch (e) {
   console.error(e.message);
   process.exitCode = 1;

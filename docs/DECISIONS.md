@@ -1,5 +1,15 @@
 # CriptoLab — Decisiones técnicas
 
+## ADR-006 — Contrato visual de la siguiente iteración
+
+**Estado:** especificado a partir de la dirección acordada; apertura y etapas afines pendientes de implementación/verificación.
+
+César +8 es el recorrido principal. Sustituir los anillos concéntricos por dos discos sobre el mismo eje: referencia detrás y cifrado delante; separarlos al abrir. El emisor comienza cerrado con control explícito; el interior está abierto y el interceptor cerrado, conservando el contexto candidato al inspeccionar un intento. Seleccionar una letra no cambia el desplazamiento. Afín permanece como modo avanzado por etapas de su propia traza, no como una rotación uniforme.
+
+Actualizar conjuntamente [Máquina](./specs/machine-interaction.md), [Perspectivas](./specs/perspectives.md), [Animaciones](./specs/animation-system.md) y [Escritorio](./specs/desktop-experience.md) antes del código. La corrección de etiquetas puede entregarse separadamente sobre la escena actual; no acredita apertura ni aceptación visual humana. Las etapas pueden mostrar expresiones Rust sin resolver intermedios ausentes: no se duplica aritmética en TypeScript ni se amplía el transporte en este incremento.
+
+No cambian los contratos matemáticos, las versiones de herramientas ni los límites entre capas. La evidencia y los pendientes se registran en [Implementación](./IMPLEMENTATION.md) y [Backlog](./BACKLOG.md).
+
 ## ADR-001 — Frontera WASM de la primera demo
 
 **Estado:** implementada y verificada en la primera demo.

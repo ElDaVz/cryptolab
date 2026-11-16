@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { MachineModel } from '../experience/session';
 import { cameraPreset } from './AnimationDirector';
+import { paintLabel } from './labels';
 
 export class Machine {
   readonly scene = new THREE.Scene();
@@ -66,7 +67,8 @@ export class Machine {
       tick.rotation.z = -angle;
     }
     const pointer = this.mesh(new THREE.ConeGeometry(0.105, 0.28, 3), brass);
-    pointer.position.set(0, 2.29, 0.3);
+    // Keep the pointer tip above the enlarged output letter, not over its glyph.
+    pointer.position.set(0, 2.53, 0.3);
     pointer.rotation.z = Math.PI;
     for (const [field, x] of [
       ['a', -1.12],
@@ -80,7 +82,10 @@ export class Machine {
       knob.userData.field = field;
       const mark = this.mesh(new THREE.BoxGeometry(0.045, 0.23, 0.04), dark, group);
       mark.position.set(0, 0.16, 0.18);
-      const label = this.label(field === 'a' ? 'a · Factor' : 'b · Desplazamiento', 0.9);
+      const label = this.label(
+        field === 'a' ? 'a · Factor' : 'b · Desplazamiento',
+        field === 'a' ? 1.45 : 1.85,
+      );
       label.position.set(x, -2.17, 0.1);
       label.userData.knobLabel = true;
       this.scene.add(label);
@@ -115,22 +120,20 @@ export class Machine {
     parent.add(mesh);
     return mesh;
   }
-  private label(text: string, width = 0.25) {
+  private label(text: string, width = 0.28) {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 128;
-    const ctx = canvas.getContext('2d')!;
-    ctx.font = '64px Georgia';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffe8af';
-    ctx.fillText(text, 256, 64);
-    const texture = new THREE.CanvasTexture(canvas),
-      material = new THREE.SpriteMaterial({ map: texture, depthWrite: false });
+    paintLabel(canvas, text);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const material = new THREE.SpriteMaterial({
+      map: texture,
+      depthWrite: false,
+      toneMapped: false,
+    });
     this.resources.add(texture);
     this.resources.add(material);
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(width, width / 4, 1);
+    sprite.scale.set(width, (width * canvas.height) / canvas.width, 1);
     return sprite;
   }
   private clearOutput() {

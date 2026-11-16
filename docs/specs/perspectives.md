@@ -10,7 +10,7 @@ La aplicación se ejecuta en el navegador. La separación es parte de la simulac
 
 ## 2. Responsabilidades y contratos
 
-`experience` conserva el estado privado y construye modelos explícitos para cada vista, entregando solo los campos autorizados. Los nombres siguientes son contratos conceptuales para implementación futura, no nuevas APIs Rust ni esquemas de transporte.
+`experience` conserva el estado privado y construye modelos explícitos para cada vista, entregando solo los campos autorizados. Los nombres siguientes son contratos de información, no nuevas APIs Rust ni esquemas de transporte. La demo contiene proyecciones; la evidencia histórica y las ampliaciones pendientes se distinguen en [Implementación](../IMPLEMENTATION.md).
 
 | Modelo | Información permitida |
 | --- | --- |
@@ -55,9 +55,15 @@ En afín, las explicaciones utilizan las claves suministrada/normalizada y la de
 
 La solución del ejercicio no puede abrirse por una acción normal o selección de contexto mientras esté `Sin resolver`. Volver al emisor siempre se refiere al trabajo propio de la sesión, nunca carga la solución preparada en sus campos. Tras reiniciar el ejercicio se retira también cualquier contexto abierto de solución o candidato del ejercicio.
 
+### Apertura y cambio de contexto
+
+La apertura es estado de presentación, no permiso para consultar información. El emisor comienza cerrado y conserva su preferencia de apertura en la sesión. El interceptor está siempre cerrado; al pedir el interior de su intento, la perspectiva interna abre los discos exclusivamente sobre ese cálculo candidato. Volver al interceptor los cierra. Un interior vacío no adopta el resultado del emisor ni una solución restringida.
+
+Antes de abrir/cerrar, mover cámaras o aplicar otro contexto, se cancelan transiciones anteriores y se retiran sus etiquetas, tabla, selección visual y etapas dependientes del cálculo. Solo después se representa la nueva proyección autorizada. No se interpolan ni se mezclan datos entre contextos, incluso al cambiar rápidamente de fuente, repetir la introducción o reiniciar el ejercicio.
+
 ## 5. Criterios de aceptación
 
-Son escenarios para futuras pruebas de proyección y estado, independientes de Three.js. No se consideran pruebas ejecutadas en este incremento documental.
+Son contratos para pruebas de proyección y estado, independientes de Three.js. Su verificación se registra por incremento; documentarlos no demuestra ejecución.
 
 | ID | Escenario verificable |
 | --- | --- |
@@ -72,6 +78,8 @@ Son escenarios para futuras pruebas de proyección y estado, independientes de T
 | PE-09 | Alternar fuentes aísla sus candidatos, trazas y feedback; volver al emisor muestra sus datos propios sin introducir la solución del ejercicio. |
 | PE-10 | César expone +8 como dato público y representa su descifrado con −8. No se exige recuperar una clave secreta inexistente en este modo. |
 | PE-11 | La separación se comprueba en los modelos y sus consumidores, no únicamente mediante visibilidad del DOM o posición de cámara. La interfaz explica su carácter educativo sin prometer confidencialidad en el navegador. |
+| PE-12 | Emisor abierto → interceptor cerrado → interior candidato abierto conserva únicamente los datos permitidos en cada destino, también durante transiciones. Un candidato (7,4) nunca recibe etapas originales (7,3). |
+| PE-13 | Invalidar/reiniciar el intento o la solución abierta retira sus etiquetas y etapas; callbacks antiguos no las reponen y un estado vacío no adopta otro resultado. |
 
 ## 6. Dependencias y finalización
 

@@ -336,3 +336,99 @@ comprobación de formato, enlaces relativos y `git diff --check` correctos.
 Se verificó que la única modificación del workflow es retirar los dos runners
 excluidos; se conservan todos los pasos de Ubuntu y Windows. No se repitieron las
 suites de aplicación porque este cambio retira plataformas y documentación.
+
+## Contratos de la siguiente iteración · revisión de los ZIP · 2026-11-15
+
+Se compararon por ruta y SHA-256 los archivos de `cryptolab-main.zip` y
+`cryptolab-feat-first-desktop-demo.zip`: sus 86 archivos son idénticos. Ambas
+copias contienen la demo. No incluyen `.git`; `git status --short` y `git branch -a`
+fallan por ausencia de repositorio. Esto no acredita el estado del PR remoto.
+Se crea una base Git local `snapshot/main` que registra exactamente el ZIP y una
+rama de trabajo `fix/machine-label-legibility`; no es el historial de GitHub.
+
+Antes de modificar código se actualizan los cuatro contratos visuales y ADR-006:
+discos/apertura, orientación César en descifrado, aislamiento de contextos,
+etapas afines, accesibilidad y criterios MI-09–14, PE-12–13, AN-11–12, DE-11–12.
+Se conserva arriba el registro histórico de la propuesta; los contratos enlazados
+son ahora la fuente normativa. Apertura y etapas no están implementadas.
+
+Verificación documental ejecutada: revisión del diff, `git diff --check` y
+comprobación Python de destinos de enlaces Markdown relativos bajo `docs/`,
+todos correctos. No se comprobaron destinos web ni anchors por ese script.
+
+Diagnóstico ejecutado desde la raíz de la copia de `main`:
+
+- `node scripts/dev.mjs setup`: falla antes de instalar; espera Node v26.13.0,
+  pero el entorno ofrece v24.22.1.
+- `node scripts/dev.mjs doctor`: falla por la versión de Node y ausencia de npm
+  local, Rust aislado, herramientas/target WASM y dependencias/Chromium del proyecto.
+
+No se rebajan pins ni se instalan herramientas globales. La evidencia histórica
+anterior no se presenta como verificación de estos cambios.
+
+## Corrección acotada de etiquetas · 2026-11-15
+
+### Problema y cambio
+
+`Machine.label` usaba siempre un canvas 512×128 y un sprite de proporción 4:1,
+incluso para una sola letra. La letra ocupaba solo una fracción del ancho y se
+representaba con una altura de sprite de 0.0625 unidades. Además, los rótulos
+largos no se medían y podían exceder el canvas.
+
+Se añade `apps/web/src/machine/labels.ts`: letras en canvas 128×128, sans serif
+negrita de 88 px, centrado por los límites reales del glifo y placa circular
+oscura opaca. Los rótulos se miden y reciben margen horizontal; se restaura el
+estado de Canvas después de cambiar sus dimensiones. `Machine.ts` conserva la
+proporción real de cada textura, usa sRGB sin tone mapping y aumenta el diámetro
+de las etiquetas de letras a 0.28 unidades. Se amplían los rótulos de perillas y
+se eleva el indicador para que su punta no ocupe el glifo superior.
+
+La propiedad y liberación de texturas/materiales permanece en `Machine`;
+`paintLabel` no crea recursos GPU. No se modifican Rust, WASM, sesiones, tablas,
+claves, selección, animaciones ni las versiones/dependencias del proyecto.
+Se añaden cuatro pruebas de regresión en `labels.test.ts`: métricas de letras
+estrechas/anchas, rótulos largos y reinicio de Canvas, contraste y falta de
+contexto 2D. **Añadidas, no ejecutadas en Vitest en este entorno.**
+
+### Comandos y resultados realmente obtenidos
+
+Además de setup/doctor fallidos descritos arriba:
+
+| Comando/comprobación | Resultado |
+| --- | --- |
+| `node scripts/dev.mjs npm --prefix apps/web run test -- src/machine/labels.test.ts` | Bloqueado antes de Vitest: Node 24.22.1 en lugar de 26.13.0. |
+| `node scripts/dev.mjs npm --prefix apps/web run typecheck` | Mismo bloqueo; no se acredita comprobación de tipos. |
+| `node scripts/dev.mjs npm --prefix apps/web run format:check` | Mismo bloqueo; no se acredita Prettier. |
+| `node verify-labels-native.mjs` (script auxiliar fuera del repositorio) | Correcto sobre el helper real: 26 letras y 3 rótulos con Canvas nativo del entorno, sin lectura de píxeles ni imágenes. |
+| `node --input-type=module` con `stripTypeScriptTypes` y `node --check` sobre `Machine.ts`, `labels.ts`, `labels.test.ts` | Sintaxis correcta en los tres; no sustituye TypeScript estricto. |
+| `git diff --check` y `node scripts/review.mjs` | Correctos: espacios y ausencia de artefactos generados versionados. |
+| Comprobación Python de destinos relativos de Markdown | Correcta para archivos bajo `docs/`; no comprueba enlaces web ni anchors. |
+
+En la prueba auxiliar, todos los glifos caben en el canvas y en sus placas,
+ocupan al menos el 45% de su altura y conservan margen. Los colores
+`#ffe8af` / `#18251f` tienen contraste calculado 13.1598:1. Son comprobaciones de
+métricas y colores, no de composición 3D ni una evaluación humana. El script se
+incluye en la entrega como `revision/verify-labels-native.mjs`, junto a su salida.
+Su dependencia auxiliar ya estaba en el runtime; no se añadió al proyecto.
+
+También se intentó un diagnóstico aislado del helper con Playwright del runtime
+(`node verify-labels.mjs` y una repetición con `TMPDIR` dentro del workspace).
+No arrancó: primero faltaba el directorio temporal predeterminado y después el
+binario Chromium de ese runtime. No se descargaron herramientas por esta vía.
+
+### Pendientes y límites de esta entrega
+
+No se ejecutaron el build, las suites Rust/WASM, la suite completa Vitest ni E2E.
+La aceptación de MI-09 queda abierta hasta pasar las comprobaciones del README
+en el entorno fijado y evaluar letras/encuadres a 1280×720 y 1920×1080. Repetir
+MI-08 para comprobar recursos en la escena real. No se capturaron imágenes,
+vídeos ni trazas. No se creó PDF.
+
+Apertura de discos, representación física inversa de César, etapas afines y sus
+nuevos criterios de accesibilidad/cancelación permanecen pendientes en el backlog.
+Esta entrega corrige las etiquetas de la escena existente; no implementa toda
+la siguiente iteración ni demuestra ausencia de otros defectos en el proyecto.
+
+Rama local: `fix/machine-label-legibility`, sobre el snapshot del ZIP de `main`.
+No hay remoto configurado ni historial original; no se hizo push, PR ni merge.
+La entrega incluye el diff y una descripción de draft PR para revisión posterior.

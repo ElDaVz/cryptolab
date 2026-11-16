@@ -4,7 +4,7 @@
 
 Demo completa en español para Chromium de escritorio: introducción, emisor, interceptor, ejercicio y mecanismo interno. Área objetivo mínima de 1280×720 píxeles CSS; verificar también 1920×1080. No se exige aceptación móvil ni en Firefox/Safari en este hito. Una ventana menor conserva acceso a formularios y navegación mediante distribución en flujo y desplazamiento; no bloquea ni descarta el trabajo.
 
-La entrega futura incluye desarrollo local y un build estático, sin servidor de aplicaciones ni publicación automática. El [recorrido](./learning-flow.md) y las [perspectivas](./perspectives.md) gobiernan estados y datos; este documento concreta su presentación. Todavía no hay interfaz implementada.
+La entrega incluye desarrollo local y un build estático, sin servidor de aplicaciones ni publicación automática. El [recorrido](./learning-flow.md) y las [perspectivas](./perspectives.md) gobiernan estados y datos; este documento concreta su presentación. La demo contiene interfaz; la apertura y las etapas afines de la siguiente iteración siguen pendientes. Consultar [Implementación](../IMPLEMENTATION.md) para distinguir código y evidencia de requisitos futuros.
 
 ## 2. Composición y navegación
 
@@ -21,6 +21,8 @@ En 1280×720 los paneles laterales tienen 300 píxeles de ancho como máximo y d
 
 Los cambios de perspectiva son acciones explícitas sin rutas de servidor. El botón general de interior abre el resultado vigente del emisor o del intento de la fuente activa, según el contexto del que se viene; si no existe, abre un estado vacío. La solución preparada solo se abre mediante su acción autorizada después de resolver o revelar. Dentro de interior se mantiene el origen, sin sustituirlo por datos de otro contexto.
 
+César aparece como recorrido principal con +8 fijo; afín se identifica como modo avanzado, conservando sus controles y el ejercicio. El emisor ofrece un botón HTML `Abrir máquina` / `Cerrar máquina` con estado accesible (`aria-expanded`), sin desplazar el foco al lienzo. Su estado inicial es cerrado; el interior se identifica como abierto y el interceptor como cerrado, sin controles que permitan eludir sus permisos. Los mismos estados y explicaciones se ofrecen sin WebGL. Las etapas afines se leen como una lista ordenada de operaciones Rust, junto a la ecuación completa.
+
 ## 3. Entrada, errores y resultados
 
 El mensaje tiene un contador `N / 256`, donde N cuenta puntos de código Unicode, no unidades UTF-16 ni bytes UTF-8. Se puede pegar o escribir texto más largo para corregirlo: no se trunca, pero se muestra un error y no se ejecuta una operación con más de 256 caracteres. El límite pertenece a la interfaz, no modifica el núcleo Rust ni la frontera WASM.
@@ -33,7 +35,7 @@ Las explicaciones usan los operandos, residuos e inversos devueltos por Rust. Eu
 
 ## 4. Accesibilidad y movimiento
 
-- Todos los formularios, claves, navegación, caracteres y controles de reproducción son HTML semántico y operables por teclado. Los controles 3D tienen equivalentes descritos en [Máquina e interacción](./machine-interaction.md).
+- Todos los formularios, claves, navegación, caracteres, apertura/cierre y controles de reproducción son HTML semántico y operables por teclado. Los controles 3D tienen equivalentes descritos en [Máquina e interacción](./machine-interaction.md).
 - Orden de tabulación: navegación superior, formulario activo, resultado/acciones y reproducción. Los paneles con desplazamiento son accesibles por teclado. No hay atajos globales de letras, espacio o flechas que interfieran con la escritura.
 - Cada entrada tiene etiqueta y descripción de restricciones. Los errores se asocian al campo; al fallar una operación, se lleva el foco al primer campo inválido. El estado de ejercicio se anuncia mediante una región de estado; la reproducción no anuncia automáticamente cada carácter ni vuelve a leer todo el resultado.
 - Al cambiar de perspectiva, el foco pasa a su encabezado. Al cerrar o terminar la introducción repetida vuelve al control que la abrió; al entrar inicialmente al laboratorio va al encabezado del emisor. Ningún panel de fondo de la introducción captura el foco.
@@ -54,7 +56,7 @@ En modo textual, anterior/siguiente, selección y reproducción recorren las mis
 
 ## 6. Criterios de aceptación
 
-Escenarios para futuras pruebas de estado, DOM y Chromium; no son pruebas de navegador ejecutadas en este incremento documental.
+Contratos para pruebas de estado, DOM y Chromium; la evidencia se registra por incremento. Los nuevos criterios DE-11/12 no se acreditan con la verificación histórica.
 
 | ID | Escenario verificable |
 | --- | --- |
@@ -68,6 +70,8 @@ Escenarios para futuras pruebas de estado, DOM y Chromium; no son pruebas de nav
 | DE-08 | WebGL ausente o perdido deja disponibles los escenarios FL/PE del recorrido y sus trazas textuales; no aparecen datos privados de un contexto anterior. |
 | DE-09 | El audio comienza silenciado, solo se habilita por acción explícita y su fallo no altera resultados, controles ni estado del ejercicio. |
 | DE-10 | El build estático carga HTML, módulos y WASM desde una subruta sin backend ni recursos de desarrollo; se cumple la prueba de distribución de [WASM](./wasm-integration.md). |
+| DE-11 | El emisor puede abrir/cerrar por teclado manteniendo foco y estado accesible; interior/interceptor muestran su estado impuesto. Todo funciona sin WebGL, sin depender de sonido o color. |
+| DE-12 | En ambos tamaños de escritorio, César es el recorrido principal, afín se identifica como avanzado y sus etapas ordenadas son legibles; revisión humana de letras según MI-09, sin capturas. |
 
 ## Documentos relacionados
 

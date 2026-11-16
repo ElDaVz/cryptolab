@@ -2,9 +2,9 @@
 
 ## 1. Responsabilidad
 
-`AnimationDirector`, dentro de `machine`, coordina GSAP para anillos, indicadores, perillas y cámaras. Consume pasos, tablas y permisos derivados de resultados Rust ya calculados. No modifica resultados, claves, estados de ejercicio ni determina caracteres por ángulos o tiempos de animación.
+`AnimationDirector`, dentro de `machine`, coordina GSAP para discos, apertura/cierre, indicadores, perillas y cámaras. Consume pasos, tablas y permisos derivados de resultados Rust ya calculados. No modifica resultados, claves, estados de ejercicio ni determina caracteres por ángulos o tiempos de animación.
 
-Esta especificación corresponde a la primera demo de escritorio y todavía no está implementada. Se aplica al [recorrido](./learning-flow.md), la [máquina](./machine-interaction.md) y sus [contextos autorizados](./perspectives.md).
+Esta especificación incluye contratos de la demo y la siguiente iteración. La apertura y las etapas afines están pendientes; la evidencia ejecutada se registra por incremento en [Implementación](../IMPLEMENTATION.md). Se aplica al [recorrido](./learning-flow.md), la [máquina](./machine-interaction.md) y sus [contextos autorizados](./perspectives.md).
 
 ## 2. Selección y reproducción
 
@@ -25,9 +25,9 @@ Sin resultado vigente no hay índice seleccionado y los controles están deshabi
 
 ## 3. Coordinación temporal y cancelación
 
-La cadencia inicial es una transición por segundo: cada segundo lleva de un paso asentado al siguiente, sin esperas adicionales ni selector de velocidad. Los dos anillos giran juntos por el trayecto angular más corto; en empate de media vuelta se usa sentido horario. El ángulo es una coordenada de presentación de la posición Rust, nunca un resultado matemático. Al asentarse el destino cambian el resaltado, índice y ecuación; durante el giro se identifica como transición entre esos pasos.
+La cadencia inicial es una transición por segundo: cada segundo lleva de un paso asentado al siguiente, sin esperas adicionales ni selector de velocidad. Los dos discos giran juntos por el trayecto angular más corto; en empate de media vuelta se usa sentido horario. El ángulo es una coordenada de presentación de la posición Rust, nunca un resultado matemático. Al asentarse el destino cambian el resaltado, índice y ecuación; durante el giro se identifica como transición entre esos pasos.
 
-Las cámaras usan transiciones de 0.6 segundos y las perillas de 0.12 segundos para alcanzar una posición de control ya elegida. Durante arrastre, el valor cambia por muescas; el tween visual puede reemplazarse por el nuevo destino sin acumular transiciones. No se interpolan claves numéricas, tablas de salida ni permisos como si fueran estados válidos intermedios.
+La apertura/cierre usa una transición cancelable de 0.6 segundos gestionada por el director; una nueva orden reemplaza el destino sin acumular tweens. Cambiar de contexto elimina primero las etiquetas y etapas anteriores. Las cámaras usan transiciones de 0.6 segundos y las perillas de 0.12 segundos para alcanzar una posición de control ya elegida. Durante arrastre, el valor cambia por muescas; el tween visual puede reemplazarse por el nuevo destino sin acumular transiciones. No se interpolan claves numéricas, tablas de salida ni permisos como si fueran estados válidos intermedios.
 
 Cada resultado/configuración tiene una revisión y un contexto asociados. Antes de ejecutar cualquier callback de GSAP, se comprueba que sigue perteneciendo a la revisión activa. Detener una secuencia mata sus tweens, timelines y callbacks pendientes; una finalización antigua no cambia selección, sonido ni etiquetas.
 
@@ -44,9 +44,13 @@ En modo textual, el mismo estado de reproducción puede avanzar con la misma cad
 
 ## 4. Movimiento reducido
 
-Si el sistema o el usuario solicita movimiento reducido, cámaras, perillas y anillos se colocan directamente en su estado objetivo, sin interpolación. `Reproducir` sigue avanzando selecciones a intervalos de un segundo; no produce movimiento interpolado. Cambiar esa preferencia durante una transición pausa y asienta el último paso seleccionado; reanudar siempre requiere una acción explícita.
+Si el sistema o el usuario solicita movimiento reducido, cámaras, apertura/cierre, perillas y discos se colocan directamente en su estado objetivo, sin interpolación. `Reproducir` sigue avanzando selecciones a intervalos de un segundo; no produce movimiento interpolado. Cambiar esa preferencia durante una transición pausa y asienta el último paso seleccionado; reanudar siempre requiere una acción explícita.
 
 Las animaciones de cámara nunca bloquean navegación ni formularios. No se añaden destellos, vibraciones, partículas ni desplazamiento ambiental continuo en esta entrega.
+
+### Etapas de afín
+
+Las tres etapas descritas en [Máquina](./machine-interaction.md) se presentan ordenadas para el carácter asentado, con énfasis secuencial solo si hay movimiento permitido. No agregan tiempo a la cadencia de un carácter por segundo, no cambian el índice de ocurrencia y no ocultan la ecuación textual completa. Seleccionar manualmente asienta todas las etapas del carácter directamente. Cancelar o cambiar contexto retira cualquier énfasis pendiente. Sin WebGL y con movimiento reducido se conserva la lista completa, sin interpolación ni necesidad de esperar una animación para leerla.
 
 ## 5. Sonido opcional
 
@@ -58,7 +62,7 @@ Silenciar, cancelar reproducción, cambiar de contexto u ocultar la pestaña det
 
 ## 6. Criterios de aceptación
 
-Escenarios futuros, a comprobar con reloj controlado, dobles de escena/audio y pruebas Chromium. No están ejecutados como pruebas frontend en este incremento documental.
+Comprobar con reloj controlado, dobles de escena/audio y pruebas Chromium; consultar el registro por incremento para saber cuáles se ejecutaron. AN-11/12 amplían la demo y permanecen pendientes.
 
 | ID | Escenario verificable |
 | --- | --- |
@@ -72,6 +76,8 @@ Escenarios futuros, a comprobar con reloj controlado, dobles de escena/audio y p
 | AN-08 | Ocultar la pestaña pausa sin recuperar pasos ni sonidos al volver. Perder WebGL mantiene selección y permite reproducción textual sin bucle GPU. |
 | AN-09 | Sin activación de sonido no se crea audio; activarlo habilita únicamente los eventos acordados. Silenciar o cancelar detiene voces y callbacks pendientes; el arrastre respeta el límite de frecuencia. |
 | AN-10 | Tras repetidas aperturas, cancelaciones y destrucción no quedan timelines, temporizadores, bucles, nodos de audio ni listeners huérfanos. |
+| AN-11 | Abrir/cerrar repetidamente y cambiar contexto durante la transición conserva el último destino autorizado; activar movimiento reducido asienta ese destino y cancela callbacks antiguos. |
+| AN-12 | Las etapas afines conservan el orden de la traza sin recalcular; seleccionar otra ocurrencia o invalidar el cálculo elimina las etapas anteriores. La ecuación completa permanece disponible sin animación. |
 
 ## Documentos relacionados
 
